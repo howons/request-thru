@@ -26,7 +26,9 @@ export default tseslint.config(
             react: {
                 version: 'detect'
             }
-        },
+        }
+    },
+    {
         ignores: ['dist', 'node_modules', '.yarn']
     }
 );
