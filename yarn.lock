@@ -2149,38 +2149,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chrome-extension-boilerplate-react-vite@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "chrome-extension-boilerplate-react-vite@workspace:."
-  dependencies:
-    "@crxjs/vite-plugin": "npm:2.0.0-beta.30"
-    "@emotion/react": "npm:^11.14.0"
-    "@emotion/styled": "npm:^11.14.0"
-    "@eslint/js": "npm:^9.19.0"
-    "@fontsource/roboto": "npm:^5.1.1"
-    "@mui/icons-material": "npm:^6.4.1"
-    "@mui/material": "npm:^6.4.1"
-    "@mui/system": "npm:^6.4.1"
-    "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
-    "@types/react": "npm:^18.3.18"
-    "@types/react-dom": "npm:^18.3.5"
-    "@vitejs/plugin-react": "npm:^4.3.4"
-    axios: "npm:^1.7.9"
-    chrome-types: "npm:^0.1.334"
-    eslint: "npm:^9.19.0"
-    eslint-config-prettier: "npm:^10.0.1"
-    eslint-plugin-react: "npm:^7.37.4"
-    eslint-plugin-react-hooks: "npm:^5.1.0"
-    prettier: "npm:^3.4.2"
-    react: "npm:^18.3.1"
-    react-dom: "npm:^18.3.1"
-    react-router-dom: "npm:^6.28.2"
-    typescript: "npm:5.7.3"
-    typescript-eslint: "npm:^8.22.0"
-    vite: "npm:^6.0.11"
-  languageName: unknown
-  linkType: soft
-
 "chrome-types@npm:^0.1.334":
   version: 0.1.334
   resolution: "chrome-types@npm:0.1.334"
@@ -5422,6 +5390,38 @@ __metadata:
   checksum: 10c0/e1a7c7dc42cc91abf73e47a269c4b3a8f225321b7f617baa25821f6a123a91d23a73b5152f21872c566e699207e1135d075d2251cd3e84cc96d82a910adf6020
   languageName: node
   linkType: hard
+
+"request-thru@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "request-thru@workspace:."
+  dependencies:
+    "@crxjs/vite-plugin": "npm:2.0.0-beta.30"
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.0"
+    "@eslint/js": "npm:^9.19.0"
+    "@fontsource/roboto": "npm:^5.1.1"
+    "@mui/icons-material": "npm:^6.4.1"
+    "@mui/material": "npm:^6.4.1"
+    "@mui/system": "npm:^6.4.1"
+    "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
+    "@types/react": "npm:^18.3.18"
+    "@types/react-dom": "npm:^18.3.5"
+    "@vitejs/plugin-react": "npm:^4.3.4"
+    axios: "npm:^1.7.9"
+    chrome-types: "npm:^0.1.334"
+    eslint: "npm:^9.19.0"
+    eslint-config-prettier: "npm:^10.0.1"
+    eslint-plugin-react: "npm:^7.37.4"
+    eslint-plugin-react-hooks: "npm:^5.1.0"
+    prettier: "npm:^3.4.2"
+    react: "npm:^18.3.1"
+    react-dom: "npm:^18.3.1"
+    react-router-dom: "npm:^6.28.2"
+    typescript: "npm:5.7.3"
+    typescript-eslint: "npm:^8.22.0"
+    vite: "npm:^6.0.11"
+  languageName: unknown
+  linkType: soft
 
 "resolve-from@npm:^4.0.0":
   version: 4.0.0
