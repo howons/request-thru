@@ -5,12 +5,12 @@ import { Toolbar } from '@mui/material';
 
 import './PopupHeader.css';
 
-export default function PopupHeader(props: { children?: ReactNode }): ReactElement {
+export default function PopupHeader({ children }: { children?: ReactNode }): ReactElement {
     return (
         <Toolbar className="popup-header" sx={{ boxShadow: 1 }}>
             <ExtensionRoundedIcon className="popup-logo" />
-            <h1>Chrome Extension React</h1>
-            {props.children}
+            <h1>request thru</h1>
+            {children}
         </Toolbar>
     );
 }
