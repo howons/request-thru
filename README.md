@@ -16,10 +16,10 @@ This boilerplate is using:
 - [MUI](https://mui.com/)
 - [CRXJS Vite Plugin](https://www.npmjs.com/package/@crxjs/vite-plugin/v/2.0.0-beta.23)
 - ESLint:
-    - [eslint-plugin-react](https://www.npmjs.com/package/eslint-plugin-react)
-    - [eslint-config-prettier](https://www.npmjs.com/package/eslint-config-prettier)
-    - [eslint-plugin-simple-import-sort](https://www.npmjs.com/package/eslint-plugin-simple-import-sort)
-    - [typescript-eslint](https://www.npmjs.com/package/typescript-eslint)
+  - [eslint-plugin-react](https://www.npmjs.com/package/eslint-plugin-react)
+  - [eslint-config-prettier](https://www.npmjs.com/package/eslint-config-prettier)
+  - [eslint-plugin-simple-import-sort](https://www.npmjs.com/package/eslint-plugin-simple-import-sort)
+  - [typescript-eslint](https://www.npmjs.com/package/typescript-eslint)
 - [Prettier](https://prettier.io/)
 - [TypeScript](https://www.typescriptlang.org/)
 
@@ -36,10 +36,10 @@ Please open up an issue to nudge me to keep the npm packages up-to-date.
 5. Run `yarn install` to install the dependencies.
 6. Run `yarn build`
 7. Load your extension on Chrome following:
-    1. Access `chrome://extensions/`
-    2. Turn the `Developer mode` switch on (top right corner)
-    3. Click on `Load unpacked`
-    4. Select the `dist` folder.
+   1. Access `chrome://extensions/`
+   2. Turn the `Developer mode` switch on (top right corner)
+   3. Click on `Load unpacked`
+   4. Select the `dist` folder.
 8. Happy hacking.
 
 ## Structure

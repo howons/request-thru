@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import './AppShell.css';
 
 export default function AppShell({ children }: { children?: ReactNode }): ReactElement {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        navigate('/home-page');
-    }, [navigate]);
+  useEffect(() => {
+    navigate('/home-page');
+  }, [navigate]);
 
-    return <div className="App">{children}</div>;
+  return <div className="App">{children}</div>;
 }

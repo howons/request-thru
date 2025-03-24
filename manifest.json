@@ -1,33 +1,33 @@
 {
-    "manifest_version": 3,
-    "name": "Request Thru",
-    "version": "REPLACED-BY-VITE",
-    "description": "A chrome extension for customizing request header",
-    "icons": {
-        "34": "assets/icons/icon-34.png",
-        "128": "assets/icons/icon-128.png"
-    },
-    "action": {
-        "default_title": "Request Thru",
-        "default_popup": "src/popup/index.html",
-        "default_icon": "assets/icons/icon-34.png"
-    },
-    "content_scripts": [
-        {
-            "js": ["src/content/index.ts"],
-            "matches": ["*://*/*"]
-        }
-    ],
-    "background": {
-        "service_worker": "src/background/index.ts"
-    },
-    "web_accessible_resources": [
-        {
-            "resources": ["assets/icons/*.png"],
-            "matches": [],
-            "extension_ids": []
-        }
-    ],
-    "permissions": ["storage", "tabs", "activeTab"],
-    "host_permissions": []
+  "manifest_version": 3,
+  "name": "Request Thru",
+  "version": "REPLACED-BY-VITE",
+  "description": "A chrome extension for customizing request header",
+  "icons": {
+    "34": "assets/icons/icon-34.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Request Thru",
+    "default_popup": "src/popup/index.html",
+    "default_icon": "assets/icons/icon-34.png"
+  },
+  "content_scripts": [
+    {
+      "js": ["src/content/index.ts"],
+      "matches": ["*://*/*"]
+    }
+  ],
+  "background": {
+    "service_worker": "src/background/index.ts"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/icons/*.png"],
+      "matches": [],
+      "extension_ids": []
+    }
+  ],
+  "permissions": ["storage", "tabs", "activeTab"],
+  "host_permissions": []
 }
