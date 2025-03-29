@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useState } from 'react';
+import { ReactElement, useState } from 'react';
 
 import { Alert, Button, Snackbar, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -7,29 +7,26 @@ import PopupContent from '../../components/PopupContent/PopupContent';
 import PopupHeader from '../../components/PopupHeader/PopupHeader';
 
 import './HomePage.css';
+import { useRuleList } from './useRuleList';
 
 export default function HomePage(): ReactElement {
-  const [reqList, setReqList] = useState<chrome.declarativeNetRequest.Rule[]>([]);
   const [disableAppendButton, setDisableAppendButton] = useState<boolean>(false);
 
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
 
-  useEffect(() => {
-    setDisableAppendButton(true);
-    chrome.declarativeNetRequest
-      .getDynamicRules()
-      .then(rules => {
-        setReqList(rules);
-      })
-      .catch(reasen => {
-        console.error(reasen);
-        setErrorSnackbarMessage('잠시 후 다시 시도해주세요');
-      })
-      .finally(() => {
-        setDisableAppendButton(false);
-      });
-  }, []);
+  const { reqList, setReqList, urlList, setUrlList, newRuleId } = useRuleList({
+    onBeforeInit() {
+      setDisableAppendButton(true);
+    },
+    onCatch(reason) {
+      console.error(reason);
+      setErrorSnackbarMessage('확장 프로그램을 다시 실행해주세요');
+    },
+    onAfterInit() {
+      setDisableAppendButton(false);
+    }
+  });
 
   function handleSnackbarClose() {
     setShowErrorSnackbar(false);
