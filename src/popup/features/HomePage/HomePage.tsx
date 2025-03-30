@@ -8,7 +8,7 @@ import PopupHeader from '../../components/PopupHeader/PopupHeader';
 import Ruleset from '../../components/Ruleset/Ruleset';
 
 import './HomePage.css';
-import { useRuleList } from './useRuleList';
+import { useLoadRule } from './useLoadRule';
 
 export default function HomePage(): ReactElement {
   const [disableAppendButton, setDisableAppendButton] = useState<boolean>(false);
@@ -16,7 +16,7 @@ export default function HomePage(): ReactElement {
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
 
-  const { initUrlRuleRef, urlList, setUrlList, newRuleId, setNewRuleId } = useRuleList({
+  const { initUrlRuleRef, urlList, setUrlList, newRuleId, setNewRuleId } = useLoadRule({
     onBeforeInit() {
       setDisableAppendButton(true);
     },

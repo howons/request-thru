@@ -6,7 +6,7 @@ type Props = {
   onAfterInit?: () => void;
 };
 
-export const useRuleList = ({ onAfterInit, onBeforeInit, onCatch }: Props) => {
+export const useLoadRule = ({ onAfterInit, onBeforeInit, onCatch }: Props) => {
   const initUrlRuleRef = useRef<Record<string, chrome.declarativeNetRequest.Rule[] | undefined>>(
     {}
   );
