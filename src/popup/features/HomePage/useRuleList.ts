@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Props = {
   onBeforeInit?: () => void;
@@ -7,10 +7,12 @@ type Props = {
 };
 
 export const useRuleList = ({ onAfterInit, onBeforeInit, onCatch }: Props) => {
-  const [reqList, setReqList] = useState<chrome.declarativeNetRequest.Rule[]>([]);
+  const initUrlRuleRef = useRef<Record<string, chrome.declarativeNetRequest.Rule[] | undefined>>(
+    {}
+  );
   const [urlList, setUrlList] = useState<string[]>([]);
 
-  const newRuleId = useMemo(() => Math.max(...reqList.map(req => req.id)), [reqList]);
+  const [newRuleId, setNewRuleId] = useState(0);
 
   useEffect(() => {
     onBeforeInit?.();
@@ -18,12 +20,23 @@ export const useRuleList = ({ onAfterInit, onBeforeInit, onCatch }: Props) => {
     chrome.declarativeNetRequest
       .getDynamicRules()
       .then(rules => {
-        setReqList(rules);
+        setNewRuleId(Math.max(...rules.map(rule => rule.id)) + 1);
 
-        if (urlList.length <= 0 && reqList.length > 0) {
+        if (urlList.length <= 0 && rules.length > 0) {
+          rules.forEach(rule => {
+            const url = rule.condition.urlFilter;
+            if (url === undefined) return;
+
+            if (initUrlRuleRef.current[url] !== undefined) {
+              initUrlRuleRef.current[url].push(rule);
+            } else {
+              initUrlRuleRef.current[url] = [rule];
+            }
+          });
+
           setUrlList(
             Array.from(
-              reqList.reduce((set, req) => {
+              rules.reduce((set, req) => {
                 const urlFilter = req.condition.urlFilter;
                 if (urlFilter && !set.has(urlFilter)) {
                   set.add(urlFilter);
@@ -40,10 +53,10 @@ export const useRuleList = ({ onAfterInit, onBeforeInit, onCatch }: Props) => {
   }, []);
 
   return {
-    reqList,
-    setReqList,
+    initUrlRuleRef,
     urlList,
     setUrlList,
-    newRuleId
+    newRuleId,
+    setNewRuleId
   };
 };

@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 
 import PopupContent from '../../components/PopupContent/PopupContent';
 import PopupHeader from '../../components/PopupHeader/PopupHeader';
+import Ruleset from '../../components/Ruleset/Ruleset';
 
 import './HomePage.css';
 import { useRuleList } from './useRuleList';
@@ -15,7 +16,7 @@ export default function HomePage(): ReactElement {
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
 
-  const { reqList, setReqList, urlList, setUrlList, newRuleId } = useRuleList({
+  const { initUrlRuleRef, urlList, setUrlList, newRuleId, setNewRuleId } = useRuleList({
     onBeforeInit() {
       setDisableAppendButton(true);
     },
@@ -44,7 +45,18 @@ export default function HomePage(): ReactElement {
           <Box alignItems="center">
             <h1>추가할 헤더 목록</h1>
           </Box>
-
+          {urlList.map((url, index) => (
+            <Ruleset
+              key={url}
+              url={url}
+              updateUrl={(newUrl: string) => {
+                setUrlList(prevUrlList =>
+                  prevUrlList.map((prevUrl, i) => (i === index ? newUrl : prevUrl))
+                );
+              }}
+              initRules={initUrlRuleRef.current[url] ?? []}
+            />
+          ))}
           <Button
             className="append-button"
             variant="contained"
