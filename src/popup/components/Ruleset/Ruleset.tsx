@@ -47,10 +47,12 @@ export default function Ruleset({ rule, updateRule }: Props) {
       <AccordionDetails>
         <List>
           {requestHeaders &&
-            requestHeaders.map(headerInfo => (
+            requestHeaders.map((headerInfo, index) => (
               <RuleItem
-                key={headerInfo.header + headerInfo.value}
+                key={index}
                 headerInfo={headerInfo}
+                index={index}
+                rule={rule}
                 updateRule={updateRule}
               />
             ))}
