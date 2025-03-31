@@ -1,22 +1,36 @@
-import { useState } from 'react';
+import { type ChangeEventHandler } from 'react';
 
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Stack,
+  List,
   Switch,
   TextField
 } from '@mui/material';
 
+import { debounce } from '../../utils/debounce';
+import RuleItem from '../RuleItem/RuleItem';
+
 type Props = {
-  url: string;
-  updateUrl: (newUrl: string) => void;
-  initRules: chrome.declarativeNetRequest.Rule[];
+  rule: chrome.declarativeNetRequest.Rule;
+  updateRule: (newRule: chrome.declarativeNetRequest.Rule) => void;
 };
 
-export default function Ruleset({ url, updateUrl, initRules }: Props) {
-  const [ruleList, setRuleList] = useState(initRules);
+export default function Ruleset({ rule, updateRule }: Props) {
+  const url = rule.condition.urlFilter;
+  const requestHeaders = rule.action.requestHeaders;
+
+  const handleUrlChange: ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = e => {
+    debounce(() => {
+      const newUrl = e.target.value;
+      const newRule = {
+        ...rule,
+        condition: { ...rule.condition, urlFilter: newUrl }
+      };
+      updateRule(newRule);
+    }, 200);
+  };
 
   return (
     <Accordion>
@@ -27,13 +41,20 @@ export default function Ruleset({ url, updateUrl, initRules }: Props) {
           label="target URL"
           type="url"
           defaultValue={url}
-          onChange={e => {
-            updateUrl(e.target.value);
-          }}
+          onChange={handleUrlChange}
         />
       </AccordionSummary>
       <AccordionDetails>
-        <Stack spacing={2}>{<></>}</Stack>
+        <List>
+          {requestHeaders &&
+            requestHeaders.map(headerInfo => (
+              <RuleItem
+                key={headerInfo.header + headerInfo.value}
+                headerInfo={headerInfo}
+                updateRule={updateRule}
+              />
+            ))}
+        </List>
       </AccordionDetails>
     </Accordion>
   );

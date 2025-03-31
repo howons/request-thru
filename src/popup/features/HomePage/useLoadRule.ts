@@ -1,61 +1,34 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Props = {
-  onBeforeInit?: () => void;
+  onBefore?: () => void;
   onCatch?: (reason: any) => void;
-  onAfterInit?: () => void;
+  onAfter?: () => void;
 };
 
-export const useLoadRule = ({ onAfterInit, onBeforeInit, onCatch }: Props) => {
-  const initUrlRuleRef = useRef<Record<string, chrome.declarativeNetRequest.Rule[] | undefined>>(
-    {}
-  );
-  const [urlList, setUrlList] = useState<string[]>([]);
-
+export const useLoadRule = ({ onAfter, onBefore, onCatch }: Props) => {
+  const [ruleList, setRuleList] = useState<chrome.declarativeNetRequest.Rule[]>([]);
   const [newRuleId, setNewRuleId] = useState(0);
 
   useEffect(() => {
-    onBeforeInit?.();
+    onBefore?.();
 
     chrome.declarativeNetRequest
       .getDynamicRules()
       .then(rules => {
         setNewRuleId(Math.max(...rules.map(rule => rule.id)) + 1);
 
-        if (urlList.length <= 0 && rules.length > 0) {
-          rules.forEach(rule => {
-            const url = rule.condition.urlFilter;
-            if (url === undefined) return;
-
-            if (initUrlRuleRef.current[url] !== undefined) {
-              initUrlRuleRef.current[url].push(rule);
-            } else {
-              initUrlRuleRef.current[url] = [rule];
-            }
-          });
-
-          setUrlList(
-            Array.from(
-              rules.reduce((set, req) => {
-                const urlFilter = req.condition.urlFilter;
-                if (urlFilter && !set.has(urlFilter)) {
-                  set.add(urlFilter);
-                }
-
-                return set;
-              }, new Set<string>())
-            )
-          );
+        if (ruleList.length <= 0 && rules.length > 0) {
+          setRuleList(rules);
         }
       })
       .catch(onCatch)
-      .finally(onAfterInit);
+      .finally(onAfter);
   }, []);
 
   return {
-    initUrlRuleRef,
-    urlList,
-    setUrlList,
+    ruleList,
+    setRuleList,
     newRuleId,
     setNewRuleId
   };

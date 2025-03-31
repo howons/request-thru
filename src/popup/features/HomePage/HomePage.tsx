@@ -16,24 +16,25 @@ export default function HomePage(): ReactElement {
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
 
-  const { initUrlRuleRef, urlList, setUrlList, newRuleId, setNewRuleId } = useLoadRule({
-    onBeforeInit() {
+  const chromeApiHandlers = {
+    onBefore() {
       setDisableAppendButton(true);
     },
-    onCatch(reason) {
+    onCatch(reason: any) {
       console.error(reason);
       setErrorSnackbarMessage('확장 프로그램을 다시 실행해주세요');
     },
-    onAfterInit() {
+    onAfter() {
       setDisableAppendButton(false);
     }
-  });
+  };
+  const { ruleList, setRuleList, newRuleId, setNewRuleId } = useLoadRule(chromeApiHandlers);
 
   function handleSnackbarClose() {
     setShowErrorSnackbar(false);
   }
 
-  function appendRuleset() {
+  function appendRule() {
     setDisableAppendButton(true);
   }
 
@@ -45,25 +46,31 @@ export default function HomePage(): ReactElement {
           <Box alignItems="center">
             <h1>추가할 헤더 목록</h1>
           </Box>
-          {urlList.map((url, index) => (
+          {ruleList.map(rule => (
             <Ruleset
-              key={url}
-              url={url}
-              updateUrl={(newUrl: string) => {
-                setUrlList(prevUrlList =>
-                  prevUrlList.map((prevUrl, i) => (i === index ? newUrl : prevUrl))
+              key={rule.id}
+              rule={rule}
+              updateRule={(newRule: chrome.declarativeNetRequest.Rule) => {
+                chromeApiHandlers.onBefore();
+                setRuleList(prevRuleList =>
+                  prevRuleList.map(prevRule => (prevRule.id === newRule.id ? newRule : prevRule))
                 );
+                chrome.declarativeNetRequest
+                  .updateDynamicRules({
+                    addRules: [newRule]
+                  })
+                  .catch(chromeApiHandlers.onCatch)
+                  .finally(chromeApiHandlers.onAfter);
               }}
-              initRules={initUrlRuleRef.current[url] ?? []}
             />
           ))}
           <Button
             className="append-button"
             variant="contained"
             disabled={disableAppendButton}
-            onClick={appendRuleset}
+            onClick={appendRule}
           >
-            Append Ruleset
+            Append Rule
           </Button>
         </Stack>
       </PopupContent>
