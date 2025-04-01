@@ -12,12 +12,6 @@
     "default_popup": "src/popup/index.html",
     "default_icon": "assets/icons/icon-34.png"
   },
-  "content_scripts": [
-    {
-      "js": ["src/content/index.ts"],
-      "matches": ["*://*/*"]
-    }
-  ],
   "background": {
     "service_worker": "src/background/index.ts"
   },
