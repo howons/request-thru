@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import PopupContent from '../../components/PopupContent/PopupContent';
 import PopupHeader from '../../components/PopupHeader/PopupHeader';
 import Ruleset from '../../components/Ruleset/Ruleset';
+import { updateRules } from '../../messages/rule';
 
 import './HomePage.css';
 import { useLoadRule } from './useLoadRule';
@@ -55,10 +56,7 @@ export default function HomePage(): ReactElement {
                 setRuleList(prevRuleList =>
                   prevRuleList.map(prevRule => (prevRule.id === newRule.id ? newRule : prevRule))
                 );
-                chrome.declarativeNetRequest
-                  .updateDynamicRules({
-                    addRules: [newRule]
-                  })
+                updateRules({ addRules: [newRule] })
                   .catch(chromeApiHandlers.onCatch)
                   .finally(chromeApiHandlers.onAfter);
               }}

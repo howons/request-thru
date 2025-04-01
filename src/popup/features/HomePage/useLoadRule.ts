@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import { getRules } from '../../messages/rule';
+
 type Props = {
   onBefore?: () => void;
   onCatch?: (reason: any) => void;
@@ -13,8 +15,7 @@ export const useLoadRule = ({ onAfter, onBefore, onCatch }: Props) => {
   useEffect(() => {
     onBefore?.();
 
-    chrome.declarativeNetRequest
-      .getDynamicRules()
+    getRules()
       .then(rules => {
         setNewRuleId(Math.max(...rules.map(rule => rule.id)) + 1);
 
