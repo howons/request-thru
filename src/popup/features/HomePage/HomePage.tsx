@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import PopupContent from '../../components/PopupContent/PopupContent';
 import PopupHeader from '../../components/PopupHeader/PopupHeader';
 import Ruleset from '../../components/Ruleset/Ruleset';
+import { emptyCondition, emptyRequestHeader } from '../../constants/rules';
 import { updateRules } from '../../messages/rule';
 
 import './HomePage.css';
@@ -31,13 +32,27 @@ export default function HomePage(): ReactElement {
   };
   const { ruleList, setRuleList, newRuleId, setNewRuleId } = useLoadRule(chromeApiHandlers);
 
-  function handleSnackbarClose() {
+  const handleSnackbarClose = () => {
     setShowErrorSnackbar(false);
-  }
+  };
 
-  function appendRule() {
-    setDisableAppendButton(true);
-  }
+  const appendRuleset = () => {
+    const newRule: chrome.declarativeNetRequest.Rule = {
+      id: newRuleId,
+      action: {
+        type: 'modifyHeaders',
+        requestHeaders: [emptyRequestHeader]
+      },
+      condition: emptyCondition
+    };
+
+    chromeApiHandlers.onBefore();
+    setRuleList(prevRuleList => [...prevRuleList, newRule]);
+    setNewRuleId(prevNewRuleId => prevNewRuleId + 1);
+    updateRules({ addRules: [newRule] })
+      .catch(chromeApiHandlers.onCatch)
+      .finally(chromeApiHandlers.onAfter);
+  };
 
   return (
     <>
@@ -45,13 +60,14 @@ export default function HomePage(): ReactElement {
       <PopupContent>
         <Stack alignItems="center" spacing={1}>
           <Box alignItems="center">
-            <h1>추가할 헤더 목록</h1>
+            <h1>Custom Header List</h1>
           </Box>
           {ruleList.map(rule => (
             <Ruleset
               key={rule.id}
               rule={rule}
-              updateRule={(newRule: chrome.declarativeNetRequest.Rule) => {
+              disableAppendButton={disableAppendButton}
+              updateRuleset={(newRule: chrome.declarativeNetRequest.Rule) => {
                 chromeApiHandlers.onBefore();
                 setRuleList(prevRuleList =>
                   prevRuleList.map(prevRule => (prevRule.id === newRule.id ? newRule : prevRule))
@@ -66,9 +82,9 @@ export default function HomePage(): ReactElement {
             className="append-button"
             variant="contained"
             disabled={disableAppendButton}
-            onClick={appendRule}
+            onClick={appendRuleset}
           >
-            Append Rule
+            Rule 추가
           </Button>
         </Stack>
       </PopupContent>

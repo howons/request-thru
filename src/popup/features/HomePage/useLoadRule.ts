@@ -10,16 +10,15 @@ type Props = {
 
 export const useLoadRule = ({ onAfter, onBefore, onCatch }: Props) => {
   const [ruleList, setRuleList] = useState<chrome.declarativeNetRequest.Rule[]>([]);
-  const [newRuleId, setNewRuleId] = useState(0);
+  const [newRuleId, setNewRuleId] = useState(1);
 
   useEffect(() => {
     onBefore?.();
 
     getRules()
       .then(rules => {
-        setNewRuleId(Math.max(...rules.map(rule => rule.id)) + 1);
-
         if (ruleList.length <= 0 && rules.length > 0) {
+          setNewRuleId(Math.max(...rules.map(rule => rule.id)) + 1);
           setRuleList(rules);
         }
       })

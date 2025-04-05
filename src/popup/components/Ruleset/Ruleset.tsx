@@ -1,23 +1,27 @@
 import { type ChangeEventHandler } from 'react';
 
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Button,
   List,
   Switch,
   TextField
 } from '@mui/material';
 
+import { emptyRequestHeader } from '../../constants/rules';
 import { debounce } from '../../utils/debounce';
 import RuleItem from '../RuleItem/RuleItem';
 
 type Props = {
   rule: chrome.declarativeNetRequest.Rule;
-  updateRule: (newRule: chrome.declarativeNetRequest.Rule) => void;
+  disableAppendButton: boolean;
+  updateRuleset: (newRule: chrome.declarativeNetRequest.Rule) => void;
 };
 
-export default function Ruleset({ rule, updateRule }: Props) {
+export default function Ruleset({ rule, disableAppendButton, updateRuleset }: Props) {
   const url = rule.condition.urlFilter;
   const requestHeaders = rule.action.requestHeaders;
 
@@ -28,13 +32,28 @@ export default function Ruleset({ rule, updateRule }: Props) {
         ...rule,
         condition: { ...rule.condition, urlFilter: newUrl }
       };
-      updateRule(newRule);
+      updateRuleset(newRule);
     }, 200);
+  };
+
+  const appendRule = () => {
+    const newRule: chrome.declarativeNetRequest.Rule = {
+      ...rule,
+      action: {
+        ...rule.action,
+        requestHeaders: [...(requestHeaders ?? []), emptyRequestHeader]
+      }
+    };
+    updateRuleset(newRule);
   };
 
   return (
     <Accordion>
-      <AccordionSummary>
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon />}
+        aria-controls={`panel${rule.id}-content`}
+        id={`panel${rule.id}-header`}
+      >
         <Switch />
         <TextField
           variant="standard"
@@ -53,10 +72,18 @@ export default function Ruleset({ rule, updateRule }: Props) {
                 headerInfo={headerInfo}
                 index={index}
                 rule={rule}
-                updateRule={updateRule}
+                updateRule={updateRuleset}
               />
             ))}
         </List>
+        <Button
+          className="append-button"
+          variant="contained"
+          disabled={disableAppendButton}
+          onClick={appendRule}
+        >
+          Header 추가
+        </Button>
       </AccordionDetails>
     </Accordion>
   );
