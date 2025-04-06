@@ -17,11 +17,10 @@ import RuleItem from '../RuleItem/RuleItem';
 
 type Props = {
   rule: chrome.declarativeNetRequest.Rule;
-  disableAppendButton: boolean;
   updateRuleset: (newRule: chrome.declarativeNetRequest.Rule) => void;
 };
 
-export default function Ruleset({ rule, disableAppendButton, updateRuleset }: Props) {
+export default function Ruleset({ rule, updateRuleset }: Props) {
   const url = rule.condition.urlFilter;
   const requestHeaders = rule.action.requestHeaders;
 
@@ -76,12 +75,7 @@ export default function Ruleset({ rule, disableAppendButton, updateRuleset }: Pr
               />
             ))}
         </List>
-        <Button
-          className="append-button"
-          variant="contained"
-          disabled={disableAppendButton}
-          onClick={appendRule}
-        >
+        <Button className="append-button" variant="contained" onClick={appendRule}>
           Header 추가
         </Button>
       </AccordionDetails>

@@ -13,21 +13,13 @@ import './HomePage.css';
 import { useLoadRule } from './useLoadRule';
 
 export default function HomePage(): ReactElement {
-  const [disableAppendButton, setDisableAppendButton] = useState<boolean>(false);
-
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
 
   const chromeApiHandlers = {
-    onBefore() {
-      setDisableAppendButton(true);
-    },
     onCatch(reason: any) {
       console.error(reason);
       setErrorSnackbarMessage('확장 프로그램을 다시 실행해주세요');
-    },
-    onAfter() {
-      setDisableAppendButton(false);
     }
   };
   const { ruleList, setRuleList, newRuleId, setNewRuleId } = useLoadRule(chromeApiHandlers);
@@ -46,12 +38,10 @@ export default function HomePage(): ReactElement {
       condition: emptyCondition
     };
 
-    chromeApiHandlers.onBefore();
     setRuleList(prevRuleList => [...prevRuleList, newRule]);
     setNewRuleId(prevNewRuleId => prevNewRuleId + 1);
-    updateRules({ addRules: [newRule] })
-      .catch(chromeApiHandlers.onCatch)
-      .finally(chromeApiHandlers.onAfter);
+
+    updateRules({ addRules: [newRule] }).catch(chromeApiHandlers.onCatch);
   };
 
   return (
@@ -60,30 +50,23 @@ export default function HomePage(): ReactElement {
       <PopupContent>
         <Stack alignItems="center" spacing={1}>
           <Box alignItems="center">
-            <h1>Custom Header List</h1>
+            <h1>Custom Headers</h1>
           </Box>
           {ruleList.map(rule => (
             <Ruleset
               key={rule.id}
               rule={rule}
-              disableAppendButton={disableAppendButton}
               updateRuleset={(newRule: chrome.declarativeNetRequest.Rule) => {
-                chromeApiHandlers.onBefore();
                 setRuleList(prevRuleList =>
                   prevRuleList.map(prevRule => (prevRule.id === newRule.id ? newRule : prevRule))
                 );
-                updateRules({ addRules: [newRule] })
-                  .catch(chromeApiHandlers.onCatch)
-                  .finally(chromeApiHandlers.onAfter);
+                updateRules({ removeRuleIds: [newRule.id], addRules: [newRule] }).catch(
+                  chromeApiHandlers.onCatch
+                );
               }}
             />
           ))}
-          <Button
-            className="append-button"
-            variant="contained"
-            disabled={disableAppendButton}
-            onClick={appendRuleset}
-          >
+          <Button className="append-button" variant="contained" onClick={appendRuleset}>
             Rule 추가
           </Button>
         </Stack>

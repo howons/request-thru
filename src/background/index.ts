@@ -18,16 +18,17 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
       })
       .catch(reason => {
         console.error(reason);
-        throw reason;
       });
-  }
-
-  if (message.action === 'updateRules') {
+  } else if (message.action === 'updateRules') {
     const ruleData: chrome.declarativeNetRequest.UpdateRuleOptions = message.payload;
-    chrome.declarativeNetRequest.updateDynamicRules(ruleData).catch(reason => {
-      console.error(reason);
-      throw reason;
-    });
+    chrome.declarativeNetRequest
+      .updateDynamicRules(ruleData)
+      .then(() => {
+        sendResponse();
+      })
+      .catch(reason => {
+        console.error(reason);
+      });
   }
 
   return true;
