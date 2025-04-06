@@ -9,10 +9,11 @@ type Props = {
   headerInfo: chrome.declarativeNetRequest.ModifyHeaderInfo;
   index: number;
   rule: chrome.declarativeNetRequest.Rule;
+  isActive: boolean;
   updateRule: (newRule: chrome.declarativeNetRequest.Rule) => void;
 };
 
-export default function RuleItem({ headerInfo, index, rule, updateRule }: Props) {
+export default function RuleItem({ headerInfo, index, rule, isActive, updateRule }: Props) {
   const { header, value } = headerInfo;
 
   const handleHeaderChange = useDebounce(
@@ -45,6 +46,7 @@ export default function RuleItem({ headerInfo, index, rule, updateRule }: Props)
         label="key"
         variant="outlined"
         defaultValue={header}
+        disabled={!isActive}
         onChange={handleHeaderChange}
       />
       <TextField
@@ -53,6 +55,7 @@ export default function RuleItem({ headerInfo, index, rule, updateRule }: Props)
         label="value"
         variant="outlined"
         defaultValue={value}
+        disabled={!isActive}
         onChange={handleHeaderChange}
       />
     </ListItem>

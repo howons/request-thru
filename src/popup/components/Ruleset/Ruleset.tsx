@@ -1,4 +1,4 @@
-import { type ChangeEvent, type ChangeEventHandler } from 'react';
+import { type ChangeEvent, useState } from 'react';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -24,9 +24,25 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
   const url = rule.condition.urlFilter;
   const requestHeaders = rule.action.requestHeaders;
 
+  const [isActive, setIsActive] = useState(!rule.condition.excludedRequestMethods?.length);
+
+  const handleOnOff = (e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
+    setIsActive(checked);
+    const newRule: chrome.declarativeNetRequest.Rule = {
+      ...rule,
+      condition: {
+        ...rule.condition,
+        excludedRequestMethods: checked
+          ? undefined
+          : ['connect', 'delete', 'get', 'head', 'options', 'other', 'patch', 'post', 'put']
+      }
+    };
+    updateRuleset(newRule);
+  };
+
   const handleUrlChange = useDebounce((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const newUrl = e.target.value;
-    const newRule = {
+    const newRule: chrome.declarativeNetRequest.Rule = {
       ...rule,
       condition: { ...rule.condition, urlFilter: newUrl }
     };
@@ -51,12 +67,13 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
         aria-controls={`panel${rule.id}-content`}
         id={`panel${rule.id}-header`}
       >
-        <Switch />
+        <Switch value={isActive} defaultChecked={isActive} onChange={handleOnOff} />
         <TextField
           variant="standard"
           label="target URL"
           type="url"
           defaultValue={url}
+          disabled={!isActive}
           onChange={handleUrlChange}
         />
       </AccordionSummary>
@@ -69,6 +86,7 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
                 headerInfo={headerInfo}
                 index={index}
                 rule={rule}
+                isActive={isActive}
                 updateRule={updateRuleset}
               />
             ))}
