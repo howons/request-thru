@@ -1,4 +1,4 @@
-import { type ChangeEventHandler } from 'react';
+import { type ChangeEvent, type ChangeEventHandler } from 'react';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 
 import { emptyRequestHeader } from '../../constants/rules';
-import { debounce } from '../../utils/debounce';
+import useDebounce from '../../utils/useDebounce';
 import RuleItem from '../RuleItem/RuleItem';
 
 type Props = {
@@ -24,16 +24,14 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
   const url = rule.condition.urlFilter;
   const requestHeaders = rule.action.requestHeaders;
 
-  const handleUrlChange: ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = e => {
-    debounce(() => {
-      const newUrl = e.target.value;
-      const newRule = {
-        ...rule,
-        condition: { ...rule.condition, urlFilter: newUrl }
-      };
-      updateRuleset(newRule);
-    }, 200);
-  };
+  const handleUrlChange = useDebounce((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const newUrl = e.target.value;
+    const newRule = {
+      ...rule,
+      condition: { ...rule.condition, urlFilter: newUrl }
+    };
+    updateRuleset(newRule);
+  }, 200);
 
   const appendRule = () => {
     const newRule: chrome.declarativeNetRequest.Rule = {

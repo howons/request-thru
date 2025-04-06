@@ -3,7 +3,7 @@ import type { ChangeEvent } from 'react';
 import { CheckBox } from '@mui/icons-material';
 import { ListItem, TextField } from '@mui/material';
 
-import { debounce } from '../../utils/debounce';
+import useDebounce from '../../utils/useDebounce';
 
 type Props = {
   headerInfo: chrome.declarativeNetRequest.ModifyHeaderInfo;
@@ -15,40 +15,45 @@ type Props = {
 export default function RuleItem({ headerInfo, index, rule, updateRule }: Props) {
   const { header, value } = headerInfo;
 
-  const handleHeaderChange =
-    (type: keyof chrome.declarativeNetRequest.ModifyHeaderInfo) =>
+  const handleHeaderChange = useDebounce(
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      debounce(() => {
-        const newHeaderInfo = { ...headerInfo, ...{ [type]: e.target.value } };
-        const newRule: chrome.declarativeNetRequest.Rule = {
-          ...rule,
-          action: {
-            ...rule.action,
-            requestHeaders: rule.action.requestHeaders?.map((header, idx) =>
-              index === idx ? newHeaderInfo : header
-            )
-          }
-        };
-        updateRule(newRule);
-      }, 200);
-    };
+      const { id, value } = e.target;
+      const newHeaderInfo = {
+        ...headerInfo,
+        ...{ [id]: value }
+      };
+      const newRule: chrome.declarativeNetRequest.Rule = {
+        ...rule,
+        action: {
+          ...rule.action,
+          requestHeaders: rule.action.requestHeaders?.map((header, idx) =>
+            index === idx ? newHeaderInfo : header
+          )
+        }
+      };
+      updateRule(newRule);
+    },
+    200
+  );
 
   return (
     <ListItem>
       <CheckBox />
       <TextField
-        variant="outlined"
-        label="key"
+        id="header"
         type="text"
+        label="key"
+        variant="outlined"
         defaultValue={header}
-        onChange={handleHeaderChange('header')}
+        onChange={handleHeaderChange}
       />
       <TextField
-        variant="outlined"
-        label="value"
+        id="value"
         type="text"
+        label="value"
+        variant="outlined"
         defaultValue={value}
-        onChange={handleHeaderChange('value')}
+        onChange={handleHeaderChange}
       />
     </ListItem>
   );
