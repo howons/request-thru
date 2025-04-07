@@ -24,10 +24,9 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
   const url = rule.condition.urlFilter;
   const requestHeaders = rule.action.requestHeaders;
 
-  const [isActive, setIsActive] = useState(!rule.condition.excludedRequestMethods?.length);
+  const isActive = !rule.condition.excludedRequestMethods?.length;
 
   const handleOnOff = (e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
-    setIsActive(checked);
     const newRule: chrome.declarativeNetRequest.Rule = {
       ...rule,
       condition: {
@@ -86,7 +85,7 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
                 headerInfo={headerInfo}
                 index={index}
                 rule={rule}
-                isActive={isActive}
+                isRulesetActive={isActive}
                 updateRule={updateRuleset}
               />
             ))}
