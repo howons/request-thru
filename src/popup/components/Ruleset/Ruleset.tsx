@@ -60,13 +60,20 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
   };
 
   return (
-    <Accordion>
+    <Accordion defaultExpanded={isActive}>
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         aria-controls={`panel${rule.id}-content`}
         id={`panel${rule.id}-header`}
       >
-        <Switch value={isActive} defaultChecked={isActive} onChange={handleOnOff} />
+        <Switch
+          value={isActive}
+          defaultChecked={isActive}
+          onChange={handleOnOff}
+          onClick={e => {
+            e.stopPropagation();
+          }}
+        />
         <TextField
           variant="standard"
           label="target URL"
@@ -74,6 +81,9 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
           defaultValue={url}
           disabled={!isActive}
           onChange={handleUrlChange}
+          onClick={e => {
+            e.stopPropagation();
+          }}
         />
       </AccordionSummary>
       <AccordionDetails>
