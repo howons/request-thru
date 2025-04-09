@@ -64,6 +64,12 @@ export default function HomePage(): ReactElement {
                   chromeApiHandlers.onCatch
                 );
               }}
+              deleteRuleset={() => {
+                setRuleList(prevRuleList =>
+                  prevRuleList.filter(prevRule => prevRule.id !== rule.id)
+                );
+                updateRules({ removeRuleIds: [newRuleId] }).catch(chromeApiHandlers.onCatch);
+              }}
             />
           ))}
           <Button className="append-button" variant="contained" onClick={appendRuleset}>

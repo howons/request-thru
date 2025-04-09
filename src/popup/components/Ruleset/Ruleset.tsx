@@ -1,4 +1,4 @@
-import { type ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useRef, useState } from 'react';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -7,6 +7,7 @@ import {
   AccordionSummary,
   Button,
   List,
+  Stack,
   Switch,
   TextField
 } from '@mui/material';
@@ -18,13 +19,17 @@ import RuleItem from '../RuleItem/RuleItem';
 type Props = {
   rule: chrome.declarativeNetRequest.Rule;
   updateRuleset: (newRule: chrome.declarativeNetRequest.Rule) => void;
+  deleteRuleset: () => void;
 };
 
-export default function Ruleset({ rule, updateRuleset }: Props) {
+export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
   const url = rule.condition.urlFilter;
   const requestHeaders = rule.action.requestHeaders;
 
   const isActive = !rule.condition.excludedRequestMethods?.length;
+
+  const [isDeleteReady, setIsDeleteReady] = useState(false);
+  const deleteRef = useRef(0);
 
   const handleOnOff = (e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
     const newRule: chrome.declarativeNetRequest.Rule = {
@@ -57,6 +62,20 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
       }
     };
     updateRuleset(newRule);
+  };
+
+  const handleDeleteClick = () => {
+    clearTimeout(deleteRef.current);
+    if (!isDeleteReady) {
+      setIsDeleteReady(true);
+      setTimeout(() => {
+        setIsDeleteReady(false);
+      }, 3000);
+
+      return;
+    }
+
+    deleteRuleset();
   };
 
   return (
@@ -103,6 +122,16 @@ export default function Ruleset({ rule, updateRuleset }: Props) {
         <Button className="append-button" variant="contained" onClick={appendRule}>
           Header 추가
         </Button>
+        <Stack direction="row" spacing={3}>
+          <Button
+            variant={isDeleteReady ? 'contained' : 'outlined'}
+            color="error"
+            onClick={handleDeleteClick}
+            sx={{ marginLeft: 'auto' }}
+          >
+            삭제
+          </Button>
+        </Stack>
       </AccordionDetails>
     </Accordion>
   );
