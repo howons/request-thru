@@ -1,6 +1,6 @@
-import type { ChangeEvent } from 'react';
+import { type ChangeEvent, useRef, useState } from 'react';
 
-import { Checkbox, ListItem, TextField } from '@mui/material';
+import { Button, Checkbox, ListItem, TextField } from '@mui/material';
 
 import useDebounce from '../../utils/useDebounce';
 
@@ -14,8 +14,10 @@ type Props = {
 
 export default function RuleItem({ headerInfo, index, rule, isRulesetActive, updateRule }: Props) {
   const { header, value } = headerInfo;
-
   const isActive = !header.startsWith('-off--');
+
+  const [isDeleteReady, setIsDeleteReady] = useState(false);
+  const deleteRef = useRef(0);
 
   const handleOnOff = (e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
     const newHeaderInfo = {
@@ -62,8 +64,29 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
     200
   );
 
+  const handleDeleteClick = () => {
+    clearTimeout(deleteRef.current);
+    if (!isDeleteReady) {
+      setIsDeleteReady(true);
+      setTimeout(() => {
+        setIsDeleteReady(false);
+      }, 3000);
+
+      return;
+    }
+
+    const deletedRule: chrome.declarativeNetRequest.Rule = {
+      ...rule,
+      action: {
+        ...rule.action,
+        requestHeaders: rule.action.requestHeaders?.filter((_, idx) => index !== idx)
+      }
+    };
+    updateRule(deletedRule);
+  };
+
   return (
-    <ListItem>
+    <ListItem sx={{ gap: '7px' }}>
       <Checkbox
         value={isActive}
         defaultChecked={isActive}
@@ -88,6 +111,14 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
         disabled={!(isActive && isRulesetActive)}
         onChange={handleHeaderChange}
       />
+      <Button
+        variant={isDeleteReady ? 'contained' : 'outlined'}
+        color="warning"
+        onClick={handleDeleteClick}
+        sx={{ minWidth: 0, padding: '3px 10px' }}
+      >
+        x
+      </Button>
     </ListItem>
   );
 }
