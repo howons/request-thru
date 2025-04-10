@@ -1,0 +1,8 @@
+.rule-options-accordian-summary {
+  min-height: 20px;
+  margin: 0;
+}
+
+.rule-options-accordian-summary > * {
+  margin: 0;
+}

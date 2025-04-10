@@ -122,7 +122,7 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
         <Button className="append-button" variant="contained" onClick={appendRule}>
           Header 추가
         </Button>
-        <Stack direction="row" spacing={3}>
+        <Stack direction="row">
           <Button
             variant={isDeleteReady ? 'contained' : 'outlined'}
             color="error"

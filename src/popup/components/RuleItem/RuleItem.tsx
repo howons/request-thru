@@ -1,8 +1,10 @@
 import { type ChangeEvent, useRef, useState } from 'react';
 
-import { Button, Checkbox, ListItem, TextField } from '@mui/material';
+import { Button, Checkbox, ListItem, Stack, TextField } from '@mui/material';
 
 import useDebounce from '../../utils/useDebounce';
+
+import RuleOptions from './RuleOptions';
 
 type Props = {
   headerInfo: chrome.declarativeNetRequest.ModifyHeaderInfo;
@@ -86,39 +88,44 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
   };
 
   return (
-    <ListItem sx={{ gap: '7px' }}>
-      <Checkbox
-        value={isActive}
-        defaultChecked={isActive}
-        onChange={handleOnOff}
-        disabled={!isRulesetActive}
-      />
-      <TextField
-        id="header"
-        type="text"
-        label="key"
-        variant="outlined"
-        defaultValue={header}
-        disabled={!(isActive && isRulesetActive)}
-        onChange={handleHeaderChange}
-      />
-      <TextField
-        id="value"
-        type="text"
-        label="value"
-        variant="outlined"
-        defaultValue={value}
-        disabled={!(isActive && isRulesetActive)}
-        onChange={handleHeaderChange}
-      />
-      <Button
-        variant={isDeleteReady ? 'contained' : 'outlined'}
-        color="warning"
-        onClick={handleDeleteClick}
-        sx={{ minWidth: 0, padding: '3px 10px' }}
-      >
-        x
-      </Button>
+    <ListItem>
+      <Stack gap={1}>
+        <Stack direction="row" gap={2}>
+          <Checkbox
+            value={isActive}
+            defaultChecked={isActive}
+            onChange={handleOnOff}
+            disabled={!isRulesetActive}
+          />
+          <TextField
+            id="header"
+            type="text"
+            label="key"
+            variant="outlined"
+            defaultValue={header}
+            disabled={!(isActive && isRulesetActive)}
+            onChange={handleHeaderChange}
+          />
+          <TextField
+            id="value"
+            type="text"
+            label="value"
+            variant="outlined"
+            defaultValue={value}
+            disabled={!(isActive && isRulesetActive)}
+            onChange={handleHeaderChange}
+          />
+          <Button
+            variant={isDeleteReady ? 'contained' : 'outlined'}
+            color="warning"
+            onClick={handleDeleteClick}
+            sx={{ minWidth: 0, padding: '3px 10px', margin: '10px 0' }}
+          >
+            x
+          </Button>
+        </Stack>
+        <RuleOptions />
+      </Stack>
     </ListItem>
   );
 }
