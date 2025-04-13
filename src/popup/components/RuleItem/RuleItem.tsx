@@ -124,7 +124,13 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
             x
           </Button>
         </Stack>
-        <RuleOptions />
+        <RuleOptions
+          updateValue={(value: string) => {
+            handleHeaderChange({ target: { id: 'value', value } } as ChangeEvent<
+              HTMLInputElement | HTMLTextAreaElement
+            >);
+          }}
+        />
       </Stack>
     </ListItem>
   );
