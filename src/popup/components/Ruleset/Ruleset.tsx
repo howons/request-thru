@@ -13,7 +13,6 @@ import {
 } from '@mui/material';
 
 import { emptyRequestHeader } from '../../constants/rules';
-import useDebounce from '../../utils/useDebounce';
 import RuleItem from '../RuleItem/RuleItem';
 
 type Props = {
@@ -44,14 +43,14 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
     updateRuleset(newRule);
   };
 
-  const handleUrlChange = useDebounce((e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleUrlChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const newUrl = e.target.value;
     const newRule: chrome.declarativeNetRequest.Rule = {
       ...rule,
       condition: { ...rule.condition, urlFilter: newUrl }
     };
     updateRuleset(newRule);
-  }, 200);
+  };
 
   const appendRule = () => {
     const newRule: chrome.declarativeNetRequest.Rule = {
@@ -97,7 +96,7 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
           variant="standard"
           label="target URL"
           type="url"
-          defaultValue={url}
+          value={url}
           disabled={!isActive}
           onChange={handleUrlChange}
           onClick={e => {

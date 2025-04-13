@@ -2,8 +2,6 @@ import { type ChangeEvent, useRef, useState } from 'react';
 
 import { Button, Checkbox, ListItem, Stack, TextField } from '@mui/material';
 
-import useDebounce from '../../utils/useDebounce';
-
 import RuleOptions from './RuleOptions';
 
 type Props = {
@@ -45,26 +43,23 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
     updateRule(newRule);
   };
 
-  const handleHeaderChange = useDebounce(
-    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const { id, value } = e.target;
-      const newHeaderInfo = {
-        ...headerInfo,
-        ...{ [id]: value }
-      };
-      const newRule: chrome.declarativeNetRequest.Rule = {
-        ...rule,
-        action: {
-          ...rule.action,
-          requestHeaders: rule.action.requestHeaders?.map((reqHeader, idx) =>
-            index === idx ? newHeaderInfo : reqHeader
-          )
-        }
-      };
-      updateRule(newRule);
-    },
-    200
-  );
+  const handleHeaderChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    const newHeaderInfo = {
+      ...headerInfo,
+      ...{ [id]: value }
+    };
+    const newRule: chrome.declarativeNetRequest.Rule = {
+      ...rule,
+      action: {
+        ...rule.action,
+        requestHeaders: rule.action.requestHeaders?.map((reqHeader, idx) =>
+          index === idx ? newHeaderInfo : reqHeader
+        )
+      }
+    };
+    updateRule(newRule);
+  };
 
   const handleDeleteClick = () => {
     clearTimeout(deleteRef.current);
@@ -102,7 +97,7 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
             type="text"
             label="key"
             variant="outlined"
-            defaultValue={header}
+            value={header}
             disabled={!(isActive && isRulesetActive)}
             onChange={handleHeaderChange}
           />
@@ -111,7 +106,7 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
             type="text"
             label="value"
             variant="outlined"
-            defaultValue={value}
+            value={value}
             disabled={!(isActive && isRulesetActive)}
             onChange={handleHeaderChange}
           />

@@ -1,4 +1,4 @@
-import { ReactElement, useState } from 'react';
+import { ReactElement, useRef, useState } from 'react';
 
 import { Alert, Button, Snackbar, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -15,6 +15,8 @@ import { useLoadRule } from './useLoadRule';
 export default function HomePage(): ReactElement {
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
+
+  const debounceRef = useRef({ timerId: 0, lastRuleId: 0 });
 
   const chromeApiHandlers = {
     onCatch(reason: any) {
@@ -60,9 +62,16 @@ export default function HomePage(): ReactElement {
                 setRuleList(prevRuleList =>
                   prevRuleList.map(prevRule => (prevRule.id === newRule.id ? newRule : prevRule))
                 );
-                updateRules({ removeRuleIds: [newRule.id], addRules: [newRule] }).catch(
-                  chromeApiHandlers.onCatch
-                );
+
+                if (newRule.id === debounceRef.current.lastRuleId) {
+                  clearTimeout(debounceRef.current.timerId);
+                }
+                debounceRef.current.timerId = setTimeout(() => {
+                  updateRules({ removeRuleIds: [newRule.id], addRules: [newRule] }).catch(
+                    chromeApiHandlers.onCatch
+                  );
+                  debounceRef.current.lastRuleId = newRule.id;
+                }, 200);
               }}
               deleteRuleset={() => {
                 setRuleList(prevRuleList =>
