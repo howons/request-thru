@@ -71,7 +71,7 @@ export default function HomePage(): ReactElement {
                     chromeApiHandlers.onCatch
                   );
                   debounceRef.current.lastRuleId = newRule.id;
-                }, 200);
+                }, 300);
               }}
               deleteRuleset={() => {
                 setRuleList(prevRuleList =>

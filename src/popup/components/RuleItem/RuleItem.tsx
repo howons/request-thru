@@ -120,6 +120,7 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
           </Button>
         </Stack>
         <RuleOptions
+          ruleItemId={`req_thru_${rule.id}_${index}`}
           updateValue={(value: string) => {
             handleHeaderChange({ target: { id: 'value', value } } as ChangeEvent<
               HTMLInputElement | HTMLTextAreaElement

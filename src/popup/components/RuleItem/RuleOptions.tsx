@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -17,26 +17,87 @@ import {
 } from '@mui/material';
 
 import { fetchData, matchResult } from '../../utils/fetch';
+import useDebounce from '../../utils/useDebounce';
 
 import './RuleOptions.css';
 
 const HOUR_LIST = [1, 3, 6, 12, 24] as const;
 const REG_FLAG_LIST = ['g', 'i', 'm'] as const;
 
+const LOCAL_KEYS = [
+  'isAutoUpdate',
+  'apiUrl',
+  'regMatcher',
+  'regFlag',
+  'regPlacer',
+  'revalidationInterval'
+] as const;
+
 type Props = {
+  ruleItemId: string;
   updateValue: (value: string) => void;
 };
 
-export default function RuleOptions({ updateValue }: Props) {
+export default function RuleOptions({ ruleItemId, updateValue }: Props) {
   const [isAutoUpdate, setIsAutoUpdate] = useState(false);
-  const [revalidationInterval, setRevalidationInterval] = useState(24);
 
-  const [apiUrl, setApiUrl] = useState<string>('');
-  const [isApiLoading, setIsApiLoading] = useState(false);
+  const [apiUrl, setApiUrl] = useState('');
 
   const [regMatcher, setRegMatcher] = useState('');
   const [regFlag, setRegFlag] = useState('g');
   const [regPlacer, setRegPlacer] = useState('');
+
+  const [revalidationInterval, setRevalidationInterval] = useState(24);
+
+  const [isApiLoading, setIsApiLoading] = useState(false);
+
+  const localKeys = useMemo(() => LOCAL_KEYS.map(key => `${ruleItemId}_${key}`), []);
+
+  useEffect(() => {
+    const setterList = [
+      setIsAutoUpdate,
+      setApiUrl,
+      setRegMatcher,
+      setRegFlag,
+      setRegPlacer,
+      setRevalidationInterval
+    ];
+    const getLocalData = async () => {
+      const data = await chrome.storage.local.get(localKeys);
+      localKeys.forEach((key, i) => {
+        const value = data?.[key];
+        if (value !== undefined) {
+          setterList[i](value);
+        }
+      });
+    };
+
+    getLocalData();
+  }, []);
+
+  const handleAutoUpdateChange = useDebounce((value: boolean) => {
+    chrome.storage.local.set({ [localKeys[0]]: value });
+  }, 300);
+
+  const handleApiUrlChange = useDebounce((value: string) => {
+    chrome.storage.local.set({ [localKeys[1]]: value });
+  }, 300);
+
+  const handleRegMatcherChange = useDebounce((value: string) => {
+    chrome.storage.local.set({ [localKeys[2]]: value });
+  }, 300);
+
+  const handleRegFlagChange = useDebounce((value: string) => {
+    chrome.storage.local.set({ [localKeys[3]]: value });
+  }, 300);
+
+  const handleRegPlacerChange = useDebounce((value: string) => {
+    chrome.storage.local.set({ [localKeys[4]]: value });
+  }, 300);
+
+  const handleRevalidationIntervalChange = useDebounce((value: number) => {
+    chrome.storage.local.set({ [localKeys[5]]: value });
+  }, 300);
 
   const handleApiRefresh = async () => {
     setIsApiLoading(true);
@@ -64,6 +125,7 @@ export default function RuleOptions({ updateValue }: Props) {
             checked={isAutoUpdate}
             onChange={e => {
               setIsAutoUpdate(e.target.checked);
+              handleAutoUpdateChange(e.target.checked);
             }}
           />
         </Stack>
@@ -75,6 +137,7 @@ export default function RuleOptions({ updateValue }: Props) {
           disabled={!isAutoUpdate}
           onChange={e => {
             setApiUrl(e.target.value);
+            handleApiUrlChange(e.target.value);
           }}
         />
         <TextField
@@ -85,6 +148,7 @@ export default function RuleOptions({ updateValue }: Props) {
           disabled={!isAutoUpdate}
           onChange={e => {
             setRegMatcher(e.target.value);
+            handleRegMatcherChange(e.target.value);
           }}
         />
         <Select
@@ -93,6 +157,7 @@ export default function RuleOptions({ updateValue }: Props) {
           disabled={!isAutoUpdate}
           onChange={e => {
             setRegFlag(e.target.value);
+            handleRegFlagChange(e.target.value);
           }}
         >
           {REG_FLAG_LIST.map(flag => (
@@ -111,6 +176,7 @@ export default function RuleOptions({ updateValue }: Props) {
             placeholder="추가텍스트 $1"
             onChange={e => {
               setRegPlacer(e.target.value);
+              handleRegPlacerChange(e.target.value);
             }}
           />
         </Tooltip>
@@ -119,7 +185,9 @@ export default function RuleOptions({ updateValue }: Props) {
           value={revalidationInterval}
           disabled={!isAutoUpdate}
           onChange={e => {
-            setRevalidationInterval(Number(e.target.value));
+            const value = Number(e.target.value);
+            setRevalidationInterval(value);
+            handleRevalidationIntervalChange(value);
           }}
         >
           {HOUR_LIST.map(hour => (
