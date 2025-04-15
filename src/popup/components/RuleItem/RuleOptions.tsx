@@ -16,6 +16,7 @@ import {
   Typography
 } from '@mui/material';
 
+import { clearAutoUpdate, setAutoUpdate } from '../../messages/autoUpdate';
 import { fetchData, matchResult } from '../../utils/fetch';
 import useDebounce from '../../utils/useDebounce';
 
@@ -35,6 +36,7 @@ const LOCAL_KEYS = [
 
 type Props = {
   ruleItemId: string;
+  ruleDisabled: boolean;
   updateValue: (value: string) => void;
 };
 
@@ -47,7 +49,7 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
   const [regFlag, setRegFlag] = useState('g');
   const [regPlacer, setRegPlacer] = useState('');
 
-  const [revalidationInterval, setRevalidationInterval] = useState(24);
+  const [revalidationInterval, setRevalidationInterval] = useState(24 * 3600000);
 
   const [isApiLoading, setIsApiLoading] = useState(false);
 
@@ -75,39 +77,61 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
     getLocalData();
   }, []);
 
-  const handleAutoUpdateChange = useDebounce((value: boolean) => {
-    chrome.storage.local.set({ [localKeys[0]]: value });
-  }, 300);
-
-  const handleApiUrlChange = useDebounce((value: string) => {
-    chrome.storage.local.set({ [localKeys[1]]: value });
-  }, 300);
-
-  const handleRegMatcherChange = useDebounce((value: string) => {
-    chrome.storage.local.set({ [localKeys[2]]: value });
-  }, 300);
-
-  const handleRegFlagChange = useDebounce((value: string) => {
-    chrome.storage.local.set({ [localKeys[3]]: value });
-  }, 300);
-
-  const handleRegPlacerChange = useDebounce((value: string) => {
-    chrome.storage.local.set({ [localKeys[4]]: value });
-  }, 300);
-
-  const handleRevalidationIntervalChange = useDebounce((value: number) => {
-    chrome.storage.local.set({ [localKeys[5]]: value });
-  }, 300);
-
-  const handleApiRefresh = async () => {
+  const handleApiRefresh = async (isAutoEnabled?: boolean) => {
     setIsApiLoading(true);
 
     const result = await fetchData(apiUrl);
     const regResult = matchResult(result, regMatcher, regFlag, regPlacer);
     updateValue(regResult);
 
-    setIsApiLoading(false);
+    if (isAutoEnabled) {
+      setAutoUpdate({
+        apiUrl,
+        regFlag,
+        regMatcher,
+        regPlacer,
+        revalidationInterval,
+        ruleItemId
+      });
+    }
+
+    setTimeout(() => {
+      setIsApiLoading(false);
+    }, 3000);
   };
+
+  const saveOptions = (index: number, value: any) => {
+    chrome.storage.local.set({ [localKeys[index]]: value });
+  };
+
+  const handleAutoUpdateChange = useDebounce((value: boolean) => {
+    saveOptions(0, value);
+    if (value) {
+      handleApiRefresh(value);
+    } else {
+      clearAutoUpdate(ruleItemId);
+    }
+  }, 300);
+
+  const handleApiUrlChange = useDebounce((value: string) => {
+    saveOptions(1, value);
+  }, 300);
+
+  const handleRegMatcherChange = useDebounce((value: string) => {
+    saveOptions(2, value);
+  }, 300);
+
+  const handleRegFlagChange = useDebounce((value: string) => {
+    saveOptions(3, value);
+  }, 300);
+
+  const handleRegPlacerChange = useDebounce((value: string) => {
+    saveOptions(4, value);
+  }, 300);
+
+  const handleRevalidationIntervalChange = useDebounce((value: number) => {
+    saveOptions(5, value);
+  }, 300);
 
   return (
     <Accordion>
@@ -134,7 +158,6 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
           label="api url"
           value={apiUrl}
           variant="outlined"
-          disabled={!isAutoUpdate}
           onChange={e => {
             setApiUrl(e.target.value);
             handleApiUrlChange(e.target.value);
@@ -145,7 +168,6 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
           label="reg matcher"
           value={regMatcher}
           variant="outlined"
-          disabled={!isAutoUpdate}
           onChange={e => {
             setRegMatcher(e.target.value);
             handleRegMatcherChange(e.target.value);
@@ -154,7 +176,6 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
         <Select
           label="reg flag"
           value={regFlag}
-          disabled={!isAutoUpdate}
           onChange={e => {
             setRegFlag(e.target.value);
             handleRegFlagChange(e.target.value);
@@ -172,7 +193,6 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
             label="reg placer"
             value={regPlacer}
             variant="outlined"
-            disabled={!isAutoUpdate}
             placeholder="추가텍스트 $1"
             onChange={e => {
               setRegPlacer(e.target.value);
@@ -183,7 +203,6 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
         <Select
           label="갱신 간격"
           value={revalidationInterval}
-          disabled={!isAutoUpdate}
           onChange={e => {
             const value = Number(e.target.value);
             setRevalidationInterval(value);
@@ -191,15 +210,18 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
           }}
         >
           {HOUR_LIST.map(hour => (
-            <MenuItem key={hour} value={3600 * hour}>
+            <MenuItem key={hour} value={3600000 * hour}>
               {hour}시간
             </MenuItem>
           ))}
         </Select>
         <IconButton
           aria-label="refresh"
-          disabled={!isAutoUpdate || isApiLoading}
-          onClick={handleApiRefresh}
+          color="primary"
+          disabled={isApiLoading}
+          onClick={() => {
+            handleApiRefresh(isAutoUpdate);
+          }}
         >
           <RefreshIcon />
         </IconButton>

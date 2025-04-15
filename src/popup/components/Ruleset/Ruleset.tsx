@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 
 import { emptyRequestHeader } from '../../constants/rules';
+import { clearAutoUpdate } from '../../messages/autoUpdate';
 import RuleItem from '../RuleItem/RuleItem';
 
 type Props = {
@@ -75,6 +76,9 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
     }
 
     deleteRuleset();
+    requestHeaders?.forEach((_, i) => {
+      clearAutoUpdate(`reqThru_${rule.id}_${i}`);
+    });
   };
 
   return (

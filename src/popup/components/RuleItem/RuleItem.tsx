@@ -2,6 +2,8 @@ import { type ChangeEvent, useRef, useState } from 'react';
 
 import { Button, Checkbox, ListItem, Stack, TextField } from '@mui/material';
 
+import { clearAutoUpdate } from '../../messages/autoUpdate';
+
 import RuleOptions from './RuleOptions';
 
 type Props = {
@@ -15,6 +17,8 @@ type Props = {
 export default function RuleItem({ headerInfo, index, rule, isRulesetActive, updateRule }: Props) {
   const { header, value } = headerInfo;
   const isActive = !header.startsWith('-off--');
+
+  const ruleItemId = `reqThru_${rule.id}_${index}`;
 
   const [isDeleteReady, setIsDeleteReady] = useState(false);
   const deleteRef = useRef(0);
@@ -80,6 +84,7 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
       }
     };
     updateRule(deletedRule);
+    clearAutoUpdate(ruleItemId);
   };
 
   return (
@@ -120,7 +125,8 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
           </Button>
         </Stack>
         <RuleOptions
-          ruleItemId={`req_thru_${rule.id}_${index}`}
+          ruleItemId={ruleItemId}
+          ruleDisabled={!(isActive && isRulesetActive)}
           updateValue={(value: string) => {
             handleHeaderChange({ target: { id: 'value', value } } as ChangeEvent<
               HTMLInputElement | HTMLTextAreaElement
