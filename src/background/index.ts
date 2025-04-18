@@ -34,7 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
   return true;
 });
 
-chrome.runtime.onMessage.addListener(message => {
+chrome.runtime.onMessage.addListener((message, sender, sendMessage) => {
   if (message.action === 'setAutoUpdate') {
     const { ruleItemId, apiUrl, regFlag, regMatcher, regPlacer, revalidationInterval } =
       message.payload as AutoUpdateProps;
@@ -68,6 +68,8 @@ chrome.runtime.onMessage.addListener(message => {
       }, revalidationInterval);
 
       chrome.storage.local.set({ [localKey]: timerId });
+
+      sendMessage();
     });
   } else if (message.action === 'clearAutoUpdate') {
     const ruleItemId = message.payload as string;
@@ -77,10 +79,24 @@ chrome.runtime.onMessage.addListener(message => {
       if (timerId) {
         clearInterval(timerId);
       }
+
+      sendMessage();
+    });
+  } else if (message.action === 'clearAllAutoUpdate') {
+    chrome.storage.local.get().then(items => {
+      Object.entries(items).forEach(([key, value]) => {
+        if (!key.startsWith('reqThru')) return;
+
+        if (value) {
+          clearInterval(value);
+        }
+      });
+
+      sendMessage();
     });
   }
 
-  return false;
+  return true;
 });
 
 export {};

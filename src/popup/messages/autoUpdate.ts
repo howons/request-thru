@@ -20,3 +20,9 @@ export async function clearAutoUpdate(ruleItemId: string) {
     payload: ruleItemId
   });
 }
+
+export async function clearAllAutoUpdate() {
+  return chrome.runtime.sendMessage({
+    action: 'clearAllAutoUpdate'
+  });
+}

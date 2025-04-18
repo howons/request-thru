@@ -6,7 +6,9 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  FormControl,
   IconButton,
+  InputLabel,
   MenuItem,
   Select,
   Stack,
@@ -92,12 +94,12 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
         regPlacer,
         revalidationInterval,
         ruleItemId
+      }).then(() => {
+        setIsApiLoading(false);
       });
-    }
-
-    setTimeout(() => {
+    } else {
       setIsApiLoading(false);
-    }, 3000);
+    }
   };
 
   const saveOptions = (index: number, value: any) => {
@@ -141,7 +143,7 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
         </Typography>
       </AccordionSummary>
       <AccordionDetails>
-        <Stack direction="row">
+        <Stack direction="row" alignItems="center">
           <Typography variant="caption" margin="0 0 0 auto">
             value 자동 업데이트
           </Typography>
@@ -173,20 +175,23 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
             handleRegMatcherChange(e.target.value);
           }}
         />
-        <Select
-          label="reg flag"
-          value={regFlag}
-          onChange={e => {
-            setRegFlag(e.target.value);
-            handleRegFlagChange(e.target.value);
-          }}
-        >
-          {REG_FLAG_LIST.map(flag => (
-            <MenuItem key={flag} value={flag}>
-              {flag}
-            </MenuItem>
-          ))}
-        </Select>
+        <FormControl>
+          <InputLabel>reg flag</InputLabel>
+          <Select
+            label="flag"
+            value={regFlag}
+            onChange={e => {
+              setRegFlag(e.target.value);
+              handleRegFlagChange(e.target.value);
+            }}
+          >
+            {REG_FLAG_LIST.map(flag => (
+              <MenuItem key={flag} value={flag}>
+                {flag}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <Tooltip title="reg 매칭그룹을 $[숫자]로 가져와 위치시키기. 기본 $1으로 시작.">
           <TextField
             type="text"
@@ -200,25 +205,29 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
             }}
           />
         </Tooltip>
-        <Select
-          label="갱신 간격"
-          value={revalidationInterval}
-          onChange={e => {
-            const value = Number(e.target.value);
-            setRevalidationInterval(value);
-            handleRevalidationIntervalChange(value);
-          }}
-        >
-          {HOUR_LIST.map(hour => (
-            <MenuItem key={hour} value={3600000 * hour}>
-              {hour}시간
-            </MenuItem>
-          ))}
-        </Select>
+        <FormControl>
+          <InputLabel>갱신 간격</InputLabel>
+          <Select
+            label="갱신 간격"
+            value={revalidationInterval}
+            onChange={e => {
+              const value = Number(e.target.value);
+              setRevalidationInterval(value);
+              handleRevalidationIntervalChange(value);
+            }}
+          >
+            {HOUR_LIST.map(hour => (
+              <MenuItem key={hour} value={3600000 * hour}>
+                {hour}시간
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <IconButton
           aria-label="refresh"
           color="primary"
           disabled={isApiLoading}
+          sx={{ margin: '8px' }}
           onClick={() => {
             handleApiRefresh(isAutoUpdate);
           }}

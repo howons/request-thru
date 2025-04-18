@@ -89,8 +89,7 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
         id={`panel${rule.id}-header`}
       >
         <Switch
-          value={isActive}
-          defaultChecked={isActive}
+          checked={isActive}
           onChange={handleOnOff}
           onClick={e => {
             e.stopPropagation();

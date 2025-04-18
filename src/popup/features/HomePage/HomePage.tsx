@@ -7,6 +7,7 @@ import PopupContent from '../../components/PopupContent/PopupContent';
 import PopupHeader from '../../components/PopupHeader/PopupHeader';
 import Ruleset from '../../components/Ruleset/Ruleset';
 import { emptyCondition, emptyRequestHeader } from '../../constants/rules';
+import { clearAllAutoUpdate } from '../../messages/autoUpdate';
 import { updateRules } from '../../messages/rule';
 
 import './HomePage.css';
@@ -46,6 +47,35 @@ export default function HomePage(): ReactElement {
     updateRules({ addRules: [newRule] }).catch(chromeApiHandlers.onCatch);
   };
 
+  const disableAllRuleset = () => {
+    const disabledRuleList = ruleList.map(rule => {
+      const newRule: chrome.declarativeNetRequest.Rule = {
+        ...rule,
+        condition: {
+          ...rule.condition,
+          excludedRequestMethods: [
+            'connect',
+            'delete',
+            'get',
+            'head',
+            'options',
+            'other',
+            'patch',
+            'post',
+            'put'
+          ]
+        }
+      };
+      return newRule;
+    });
+
+    setRuleList(disabledRuleList);
+    updateRules({ removeRuleIds: ruleList.map(rule => rule.id), addRules: disabledRuleList }).catch(
+      chromeApiHandlers.onCatch
+    );
+    clearAllAutoUpdate();
+  };
+
   return (
     <>
       <PopupHeader />
@@ -77,13 +107,23 @@ export default function HomePage(): ReactElement {
                 setRuleList(prevRuleList =>
                   prevRuleList.filter(prevRule => prevRule.id !== rule.id)
                 );
-                updateRules({ removeRuleIds: [newRuleId] }).catch(chromeApiHandlers.onCatch);
+                updateRules({ removeRuleIds: [rule.id] }).catch(chromeApiHandlers.onCatch);
               }}
             />
           ))}
           <Button className="append-button" variant="contained" onClick={appendRuleset}>
             Rule 추가
           </Button>
+          <Stack direction="row" width="90%">
+            <Button
+              variant="outlined"
+              color="error"
+              sx={{ marginLeft: 'auto' }}
+              onClick={disableAllRuleset}
+            >
+              전체 비활성화
+            </Button>
+          </Stack>
         </Stack>
       </PopupContent>
       <Snackbar open={showErrorSnackbar} autoHideDuration={5000} onClose={handleSnackbarClose}>
