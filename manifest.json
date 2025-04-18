@@ -4,13 +4,13 @@
   "version": "REPLACED-BY-VITE",
   "description": "A chrome extension for customizing request header",
   "icons": {
-    "34": "assets/icons/icon-34.png",
+    "32": "assets/icons/icon-32.png",
     "128": "assets/icons/icon-128.png"
   },
   "action": {
     "default_title": "Request Thru",
     "default_popup": "src/popup/index.html",
-    "default_icon": "assets/icons/icon-34.png"
+    "default_icon": "assets/icons/icon-32.png"
   },
   "background": {
     "service_worker": "src/background/index.ts"
