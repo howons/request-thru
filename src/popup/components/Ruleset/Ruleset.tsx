@@ -117,7 +117,9 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
                 index={index}
                 rule={rule}
                 isRulesetActive={isActive}
+                isSingle={requestHeaders.length === 1}
                 updateRule={updateRuleset}
+                deleteRuleset={deleteRuleset}
               />
             ))}
         </List>

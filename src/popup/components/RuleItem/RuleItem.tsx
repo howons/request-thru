@@ -11,10 +11,20 @@ type Props = {
   index: number;
   rule: chrome.declarativeNetRequest.Rule;
   isRulesetActive: boolean;
+  isSingle: boolean;
   updateRule: (newRule: chrome.declarativeNetRequest.Rule) => void;
+  deleteRuleset: () => void;
 };
 
-export default function RuleItem({ headerInfo, index, rule, isRulesetActive, updateRule }: Props) {
+export default function RuleItem({
+  headerInfo,
+  index,
+  rule,
+  isRulesetActive,
+  isSingle,
+  updateRule,
+  deleteRuleset
+}: Props) {
   const { header, value } = headerInfo;
   const isActive = !header.startsWith('-off--');
 
@@ -76,14 +86,18 @@ export default function RuleItem({ headerInfo, index, rule, isRulesetActive, upd
       return;
     }
 
-    const deletedRule: chrome.declarativeNetRequest.Rule = {
-      ...rule,
-      action: {
-        ...rule.action,
-        requestHeaders: rule.action.requestHeaders?.filter((_, idx) => index !== idx)
-      }
-    };
-    updateRule(deletedRule);
+    if (isSingle) {
+      deleteRuleset();
+    } else {
+      const deletedRule: chrome.declarativeNetRequest.Rule = {
+        ...rule,
+        action: {
+          ...rule.action,
+          requestHeaders: rule.action.requestHeaders?.filter((_, idx) => index !== idx)
+        }
+      };
+      updateRule(deletedRule);
+    }
     clearAutoUpdate(ruleItemId);
   };
 

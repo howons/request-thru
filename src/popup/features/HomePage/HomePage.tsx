@@ -114,7 +114,7 @@ export default function HomePage(): ReactElement {
           <Button className="append-button" variant="contained" onClick={appendRuleset}>
             Rule 추가
           </Button>
-          <Stack direction="row" width="90%">
+          <Stack direction="row" alignSelf="stretch" padding="16px">
             <Button
               variant="outlined"
               color="error"
