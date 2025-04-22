@@ -1,10 +1,6 @@
 export type AutoUpdateProps = {
   ruleItemId: string;
-  apiUrl: string;
-  regMatcher: string;
-  regFlag: string;
-  regPlacer: string;
-  revalidationInterval: number;
+  value: string;
 };
 
 export async function setAutoUpdate(props: AutoUpdateProps) {

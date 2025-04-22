@@ -11,3 +11,12 @@ export const emptyRequestHeader: elementType<
   operation: 'set',
   value: ''
 };
+
+export const LOCAL_KEYS = [
+  'isAutoUpdate',
+  'apiUrl',
+  'regMatcher',
+  'regFlag',
+  'regPlacer',
+  'revalidationInterval'
+] as const;

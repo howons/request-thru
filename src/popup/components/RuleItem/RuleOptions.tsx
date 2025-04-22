@@ -18,6 +18,7 @@ import {
   Typography
 } from '@mui/material';
 
+import { LOCAL_KEYS } from '../../constants/rules';
 import { clearAutoUpdate, setAutoUpdate } from '../../messages/autoUpdate';
 import { fetchData, matchResult } from '../../utils/fetch';
 import useDebounce from '../../utils/useDebounce';
@@ -26,15 +27,6 @@ import './RuleOptions.css';
 
 const HOUR_LIST = [1, 3, 6, 12, 24] as const;
 const REG_FLAG_LIST = ['g', 'i', 'm'] as const;
-
-const LOCAL_KEYS = [
-  'isAutoUpdate',
-  'apiUrl',
-  'regMatcher',
-  'regFlag',
-  'regPlacer',
-  'revalidationInterval'
-] as const;
 
 type Props = {
   ruleItemId: string;
@@ -88,12 +80,8 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
 
     if (isAutoEnabled) {
       setAutoUpdate({
-        apiUrl,
-        regFlag,
-        regMatcher,
-        regPlacer,
-        revalidationInterval,
-        ruleItemId
+        ruleItemId,
+        value: regResult
       }).then(() => {
         setIsApiLoading(false);
       });

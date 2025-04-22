@@ -11,7 +11,12 @@ export async function fetchData(url: string, options?: AxiosRequestConfig) {
   }
 }
 
-export function matchResult(result: string, reg: string, regFlag: string, regPlacer: string) {
+export function matchResult(
+  result: string,
+  reg: string = '',
+  regFlag: string = 'g',
+  regPlacer: string = ''
+) {
   try {
     const regExp = new RegExp(reg, regFlag);
     const match = regExp.exec(result);
