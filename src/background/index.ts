@@ -31,40 +31,51 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
   return true;
 });
 
+let storageItems: Record<string, any> | null = null;
+
 chrome.tabs.onActivated.addListener(() => {
-  chrome.storage.local.get().then(items => {
-    Object.entries(items).forEach(async ([key, updatedAt]) => {
-      if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
-      const ruleItemId = key.split('_auto')[0];
-
-      const revalidationKey = `${ruleItemId}_${LOCAL_KEYS[5]}`;
-      const revalidationInterval =
-        ((await chrome.storage.local.get(revalidationKey))[revalidationKey] as number) ??
-        24 * 3600000;
-
-      const timeFromUpdate = Date.now() - Number(updatedAt);
-      if (revalidationInterval > timeFromUpdate) return;
-
-      const itemLocalKeys = LOCAL_KEYS.slice(1, 5).map(key => `${ruleItemId}_${key}`);
-      const {
-        [itemLocalKeys[0]]: apiUrl,
-        [itemLocalKeys[1]]: regMatcher,
-        [itemLocalKeys[2]]: regFlag,
-        [itemLocalKeys[3]]: regPlacer
-      } = await chrome.storage.local.get([
-        itemLocalKeys[0],
-        itemLocalKeys[1],
-        itemLocalKeys[2],
-        itemLocalKeys[3]
-      ]);
-
-      const result = await fetchData(apiUrl);
-      const regResult = matchResult(result, regMatcher, regFlag, regPlacer);
-
-      autoUpdateRule({ ruleItemId, value: regResult });
+  if (storageItems) {
+    updateRuleOnTabActivate(storageItems);
+  } else {
+    chrome.storage.local.get().then(items => {
+      storageItems = items;
+      updateRuleOnTabActivate(items);
     });
-  });
+  }
 });
+
+function updateRuleOnTabActivate(items: Record<string, any>) {
+  Object.entries(items).forEach(async ([key, updatedAt]) => {
+    if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
+    const ruleItemId = key.split('_auto')[0];
+
+    const revalidationKey = `${ruleItemId}_${LOCAL_KEYS[5]}`;
+    const revalidationInterval =
+      ((await chrome.storage.local.get(revalidationKey))[revalidationKey] as number) ??
+      24 * 3600000;
+
+    const timeFromUpdate = Date.now() - Number(updatedAt);
+    if (revalidationInterval > timeFromUpdate) return;
+
+    const itemLocalKeys = LOCAL_KEYS.slice(1, 5).map(key => `${ruleItemId}_${key}`);
+    const {
+      [itemLocalKeys[0]]: apiUrl,
+      [itemLocalKeys[1]]: regMatcher,
+      [itemLocalKeys[2]]: regFlag,
+      [itemLocalKeys[3]]: regPlacer
+    } = await chrome.storage.local.get([
+      itemLocalKeys[0],
+      itemLocalKeys[1],
+      itemLocalKeys[2],
+      itemLocalKeys[3]
+    ]);
+
+    const result = await fetchData(apiUrl);
+    const regResult = matchResult(result, regMatcher, regFlag, regPlacer);
+
+    autoUpdateRule({ ruleItemId, value: regResult });
+  });
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendMessage) => {
   if (message.action === 'setAutoUpdate') {
