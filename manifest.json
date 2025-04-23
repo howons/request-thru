@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Request Thru",
-  "version": "REPLACED-BY-VITE",
+  "version": "1.0.0",
   "description": "A chrome extension for customizing request header",
   "icons": {
     "32": "assets/icons/icon-32.png",
