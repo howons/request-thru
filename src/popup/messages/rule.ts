@@ -12,3 +12,10 @@ export async function updateRules(ruleData: chrome.declarativeNetRequest.UpdateR
     payload: ruleData
   });
 }
+
+export async function setBlock(enable: boolean) {
+  return chrome.runtime.sendMessage({
+    action: 'setBlock',
+    payload: enable
+  });
+}

@@ -24,6 +24,13 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
       .catch(reason => {
         console.error(reason);
       });
+
+    if (ruleData.removeRuleIds?.[0] === block.tabId) {
+      block.tabId = -1;
+    }
+  } else if (message.action === 'setBlock') {
+    const enable = message.payload as boolean;
+    block.enabled = enable;
   } else {
     return false;
   }
@@ -129,6 +136,60 @@ function autoUpdateRule({ ruleItemId, value }: FetchAndUpdateRuleProps) {
       addRules: [modifyingRule]
     });
   });
+}
+
+let reqCounts: Record<number, number> = {};
+const block = {
+  tabId: -1,
+  enabled: true
+};
+chrome.storage.local.get('reqThru_block').then(items => {
+  block.enabled = items.reqThru_block ?? true;
+});
+
+chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: ['<all_urls>'] }, []);
+
+function blockReqHandler(
+  details: Parameters<Parameters<typeof chrome.webRequest.onBeforeRequest.addListener>[0]>[0]
+): chrome.webRequest.BlockingResponse | undefined {
+  const tabId = details.tabId;
+  if (tabId === -1) return undefined;
+
+  if (!block.enabled) return undefined;
+
+  reqCounts[tabId] = (reqCounts[tabId] || 0) + 1;
+  if (block.tabId !== tabId && reqCounts[tabId] > 300) {
+    const initiator = details.initiator ?? '*://*';
+    chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [tabId],
+      addRules: [
+        {
+          id: tabId,
+          action: { type: 'block' },
+          condition: {
+            urlFilter: `${initiator}/*`
+          }
+        }
+      ]
+    });
+    console.log('block:', tabId, initiator);
+
+    block.tabId = tabId;
+    reqCounts[tabId] = 0;
+
+    setInterval(() => {
+      reqCounts = {};
+      if (block.tabId !== -1) {
+        console.log('reset blocking');
+        chrome.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: [block.tabId]
+        });
+        block.tabId = -1;
+      }
+    }, 60000);
+  }
+
+  return undefined;
 }
 
 export {};

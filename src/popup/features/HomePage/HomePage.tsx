@@ -1,6 +1,6 @@
-import { ReactElement, useRef, useState } from 'react';
+import { ReactElement, useEffect, useRef, useState } from 'react';
 
-import { Alert, Button, Snackbar, Stack } from '@mui/material';
+import { Alert, Button, Snackbar, Stack, Switch, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 
 import PopupContent from '../../components/PopupContent/PopupContent';
@@ -8,7 +8,7 @@ import PopupHeader from '../../components/PopupHeader/PopupHeader';
 import Ruleset from '../../components/Ruleset/Ruleset';
 import { emptyCondition, emptyRequestHeader } from '../../constants/rules';
 import { clearAllAutoUpdate } from '../../messages/autoUpdate';
-import { updateRules } from '../../messages/rule';
+import { setBlock, updateRules } from '../../messages/rule';
 
 import './HomePage.css';
 import { useLoadRule } from './useLoadRule';
@@ -16,6 +16,8 @@ import { useLoadRule } from './useLoadRule';
 export default function HomePage(): ReactElement {
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
+
+  const [enableBlock, setEnableBlock] = useState(true);
 
   const debounceRef = useRef({ timerId: 0, lastRuleId: 0 });
 
@@ -26,6 +28,16 @@ export default function HomePage(): ReactElement {
     }
   };
   const { ruleList, setRuleList, newRuleId, setNewRuleId } = useLoadRule(chromeApiHandlers);
+
+  useEffect(() => {
+    chrome.storage.local.get(['reqThru_block']).then(res => {
+      const isBlock = res.reqThru_block;
+      if (isBlock !== undefined) {
+        setEnableBlock(isBlock);
+        setBlock(isBlock);
+      }
+    });
+  }, []);
 
   const handleSnackbarClose = () => {
     setShowErrorSnackbar(false);
@@ -76,6 +88,15 @@ export default function HomePage(): ReactElement {
     clearAllAutoUpdate();
   };
 
+  const toggleBlocking: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void = (
+    event,
+    checked
+  ) => {
+    setEnableBlock(checked);
+    setBlock(checked);
+    chrome.storage.local.set({ reqThru_block: checked });
+  };
+
   return (
     <>
       <PopupHeader />
@@ -123,6 +144,12 @@ export default function HomePage(): ReactElement {
             >
               전체 비활성화
             </Button>
+          </Stack>
+          <Stack direction="row" alignSelf="stretch" padding="16px" alignItems={'center'}>
+            <Typography variant="caption" sx={{ marginLeft: 'auto' }}>
+              무한 네트워크 요청 자동 차단
+            </Typography>
+            <Switch checked={enableBlock} onChange={toggleBlocking} />
           </Stack>
         </Stack>
       </PopupContent>

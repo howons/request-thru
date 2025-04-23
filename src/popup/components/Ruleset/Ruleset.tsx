@@ -9,7 +9,8 @@ import {
   List,
   Stack,
   Switch,
-  TextField
+  TextField,
+  Typography
 } from '@mui/material';
 
 import { emptyRequestHeader } from '../../constants/rules';
@@ -27,6 +28,8 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
   const requestHeaders = rule.action.requestHeaders;
 
   const isActive = !rule.condition.excludedRequestMethods?.length;
+
+  const isBlock = rule.action.type === 'block';
 
   const [isDeleteReady, setIsDeleteReady] = useState(false);
   const deleteRef = useRef(0);
@@ -108,24 +111,33 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
         />
       </AccordionSummary>
       <AccordionDetails>
-        <List>
-          {requestHeaders &&
-            requestHeaders.map((headerInfo, index) => (
-              <RuleItem
-                key={index}
-                headerInfo={headerInfo}
-                index={index}
-                rule={rule}
-                isRulesetActive={isActive}
-                isSingle={requestHeaders.length === 1}
-                updateRule={updateRuleset}
-                deleteRuleset={deleteRuleset}
-              />
-            ))}
-        </List>
-        <Button className="append-button" variant="contained" onClick={appendRule}>
-          Header 추가
-        </Button>
+        {!isBlock ? (
+          <>
+            <List>
+              {requestHeaders &&
+                requestHeaders.map((headerInfo, index) => (
+                  <RuleItem
+                    key={index}
+                    headerInfo={headerInfo}
+                    index={index}
+                    rule={rule}
+                    isRulesetActive={isActive}
+                    isSingle={requestHeaders.length === 1}
+                    updateRule={updateRuleset}
+                    deleteRuleset={deleteRuleset}
+                  />
+                ))}
+            </List>
+            <Button className="append-button" variant="contained" onClick={appendRule}>
+              Header 추가
+            </Button>
+          </>
+        ) : (
+          <Typography color="error">
+            현재 과도한 양의 반복 요청으로 인해 해당 url에서의 네트워크 요청을 차단했습니다. <br />
+            문제 원인을 제거한 뒤 해당 rule을 삭제해주세요.
+          </Typography>
+        )}
         <Stack direction="row">
           <Button
             variant={isDeleteReady ? 'contained' : 'outlined'}
