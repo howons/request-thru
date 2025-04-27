@@ -147,7 +147,10 @@ chrome.storage.local.get('reqThru_block').then(items => {
   block.enabled = items.reqThru_block ?? true;
 });
 
-chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: ['<all_urls>'] }, []);
+chrome.permissions.getAll().then(permissions => {
+  const hostPermissions = permissions.origins ?? [];
+  chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: hostPermissions }, []);
+});
 
 function blockReqHandler(
   details: Parameters<Parameters<typeof chrome.webRequest.onBeforeRequest.addListener>[0]>[0]
@@ -158,7 +161,7 @@ function blockReqHandler(
   if (!block.enabled) return undefined;
 
   reqCounts[tabId] = (reqCounts[tabId] || 0) + 1;
-  if (block.tabId !== tabId && reqCounts[tabId] > 300) {
+  if (block.tabId !== tabId && reqCounts[tabId] > 100) {
     const initiator = details.initiator ?? '*://*';
     chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [tabId],
@@ -176,18 +179,18 @@ function blockReqHandler(
 
     block.tabId = tabId;
     reqCounts[tabId] = 0;
-
-    setInterval(() => {
-      reqCounts = {};
-      if (block.tabId !== -1) {
-        console.log('reset blocking');
-        chrome.declarativeNetRequest.updateDynamicRules({
-          removeRuleIds: [block.tabId]
-        });
-        block.tabId = -1;
-      }
-    }, 60000);
   }
+
+  setInterval(() => {
+    reqCounts = {};
+    if (block.tabId !== -1) {
+      console.log('reset blocking');
+      chrome.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: [block.tabId]
+      });
+      block.tabId = -1;
+    }
+  }, 60000);
 
   return undefined;
 }
