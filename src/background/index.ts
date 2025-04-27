@@ -16,27 +16,46 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
       });
   } else if (message.action === 'updateRules') {
     const ruleData: chrome.declarativeNetRequest.UpdateRuleOptions = message.payload;
-    chrome.declarativeNetRequest
-      .updateDynamicRules(ruleData)
-      .then(() => {
-        sendResponse();
-      })
-      .catch(reason => {
-        console.error(reason);
-      });
-
-    if (ruleData.removeRuleIds?.[0] === block.tabId) {
-      block.tabId = -1;
-    }
+    updateRules(ruleData, sendResponse).then(() => {
+      setBlockReqListener();
+    });
   } else if (message.action === 'setBlock') {
-    const enable = message.payload as boolean;
-    block.enabled = enable;
+    const enableBlock = message.payload as boolean;
+    block.enabled = enableBlock;
+
+    return false;
   } else {
     return false;
   }
 
   return true;
 });
+
+async function updateRules(
+  ruleData: chrome.declarativeNetRequest.UpdateRuleOptions,
+  sendResponse: (...args: any[]) => void
+) {
+  const urlFilter = ruleData.addRules?.[0].condition?.urlFilter;
+  if (urlFilter) {
+    const granted = await chrome.permissions.request({ origins: [urlFilter] });
+    if (!granted) {
+      console.error('Permission not granted for URL:', urlFilter);
+    }
+  }
+
+  chrome.declarativeNetRequest
+    .updateDynamicRules(ruleData)
+    .then(() => {
+      sendResponse();
+    })
+    .catch(reason => {
+      console.error(reason);
+    });
+
+  if (ruleData.removeRuleIds?.[0] === block.tabId) {
+    block.tabId = -1;
+  }
+}
 
 let storageItems: Record<string, any> | null = null;
 
@@ -143,18 +162,17 @@ const block = {
   tabId: -1,
   enabled: true
 };
-chrome.storage.local.get('reqThru_block').then(items => {
-  block.enabled = items.reqThru_block ?? true;
-});
 
-chrome.permissions.getAll().then(permissions => {
-  const hostPermissions = permissions.origins ?? [];
-  chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: hostPermissions }, []);
-});
+function setBlockReqListener() {
+  chrome.permissions.getAll().then(permissions => {
+    const hostPermissions = permissions.origins ?? [];
 
-function blockReqHandler(
-  details: Parameters<Parameters<typeof chrome.webRequest.onBeforeRequest.addListener>[0]>[0]
-): chrome.webRequest.BlockingResponse | undefined {
+    chrome.webRequest.onBeforeRequest.removeListener(blockReqHandler);
+    chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: hostPermissions }, []);
+  });
+}
+
+function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | undefined {
   const tabId = details.tabId;
   if (tabId === -1) return undefined;
 

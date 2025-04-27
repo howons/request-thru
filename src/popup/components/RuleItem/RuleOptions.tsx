@@ -74,6 +74,12 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
   const handleApiRefresh = async (isAutoEnabled?: boolean) => {
     setIsApiLoading(true);
 
+    const granted = await chrome.permissions.request({ origins: [apiUrl] });
+    if (!granted) {
+      setIsApiLoading(false);
+      return;
+    }
+
     const result = await fetchData(apiUrl);
     const regResult = matchResult(result, regMatcher, regFlag, regPlacer);
     updateValue(regResult);
@@ -101,27 +107,27 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
     } else {
       clearAutoUpdate(ruleItemId);
     }
-  }, 300);
+  }, 1000);
 
   const handleApiUrlChange = useDebounce((value: string) => {
     saveOptions(1, value);
-  }, 300);
+  }, 1000);
 
   const handleRegMatcherChange = useDebounce((value: string) => {
     saveOptions(2, value);
-  }, 300);
+  }, 1000);
 
   const handleRegFlagChange = useDebounce((value: string) => {
     saveOptions(3, value);
-  }, 300);
+  }, 1000);
 
   const handleRegPlacerChange = useDebounce((value: string) => {
     saveOptions(4, value);
-  }, 300);
+  }, 1000);
 
   const handleRevalidationIntervalChange = useDebounce((value: number) => {
     saveOptions(5, value);
-  }, 300);
+  }, 1000);
 
   return (
     <Accordion>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { Stack, Switch, Typography } from '@mui/material';
+import { Stack, Switch, Tooltip, Typography } from '@mui/material';
 
 import { setBlock } from '../../messages/rule';
 
@@ -30,7 +30,9 @@ export default function InfRequest() {
       <Typography variant="caption" sx={{ marginLeft: 'auto' }}>
         무한 네트워크 요청 자동 차단
       </Typography>
-      <Switch checked={enableBlock} onChange={toggleBlocking} />
+      <Tooltip title="Rule이 하나라도 존재하는 url만 차단합니다.">
+        <Switch checked={enableBlock} onChange={toggleBlocking} />
+      </Tooltip>
     </Stack>
   );
 }

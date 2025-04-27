@@ -13,9 +13,9 @@ export async function updateRules(ruleData: chrome.declarativeNetRequest.UpdateR
   });
 }
 
-export async function setBlock(enable: boolean) {
+export async function setBlock(enableBlock: boolean) {
   return chrome.runtime.sendMessage({
     action: 'setBlock',
-    payload: enable
+    payload: enableBlock
   });
 }

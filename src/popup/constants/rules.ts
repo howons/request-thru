@@ -1,7 +1,7 @@
 type elementType<T> = T extends (infer U)[] ? U : T;
 
 export const emptyCondition: chrome.declarativeNetRequest.Rule['condition'] = {
-  urlFilter: '/*'
+  urlFilter: 'http://*/*'
 };
 
 export const emptyRequestHeader: elementType<

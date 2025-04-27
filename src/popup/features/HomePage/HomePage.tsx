@@ -1,6 +1,6 @@
-import { ReactElement, useEffect, useRef, useState } from 'react';
+import { ReactElement, useRef, useState } from 'react';
 
-import { Alert, Button, Snackbar, Stack, Switch, Typography } from '@mui/material';
+import { Alert, Button, Snackbar, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
 
 import InfRequest from '../../components/InfRequest/InfRequest';
@@ -102,7 +102,7 @@ export default function HomePage(): ReactElement {
                     chromeApiHandlers.onCatch
                   );
                   debounceRef.current.lastRuleId = newRule.id;
-                }, 300);
+                }, 1000);
               }}
               deleteRuleset={() => {
                 setRuleList(prevRuleList =>
