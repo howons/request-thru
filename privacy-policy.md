@@ -20,7 +20,7 @@ Our extension requires the following permissions:
 
 - `webRequest`: To count excessive requests
 - `declarativeNetRequest`: To intercept and modify network requests
-- `host_permissions`: To apply changes to specific domains
+- `optional_host_permissions`: To apply changes to specific domains
 
 These permissions are strictly used to enhance browsing functionality and **not** for tracking users.
 

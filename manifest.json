@@ -22,6 +22,6 @@
       "extension_ids": []
     }
   ],
-  "permissions": ["storage", "tabs", "activeTab", "declarativeNetRequest", "webRequest"],
+  "permissions": ["storage", "declarativeNetRequest", "webRequest"],
   "optional_host_permissions": ["http://*/*", "https://*/*"]
 }
