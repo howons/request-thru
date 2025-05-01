@@ -35,25 +35,24 @@ async function updateRules(
   ruleData: chrome.declarativeNetRequest.UpdateRuleOptions,
   sendResponse: (...args: any[]) => void
 ) {
-  const urlFilter = ruleData.addRules?.[0].condition?.urlFilter;
-  if (urlFilter) {
-    const granted = await chrome.permissions.request({ origins: [urlFilter] });
-    if (!granted) {
-      console.error('Permission not granted for URL:', urlFilter);
+  try {
+    const urlFilter = ruleData.addRules?.[0].condition?.urlFilter;
+    if (urlFilter) {
+      const granted = await chrome.permissions.request({ origins: [urlFilter] });
+      if (!granted) {
+        console.error('Permission not granted for URL:', urlFilter);
+      }
     }
-  }
 
-  chrome.declarativeNetRequest
-    .updateDynamicRules(ruleData)
-    .then(() => {
-      sendResponse();
-    })
-    .catch(reason => {
-      console.error(reason);
-    });
+    await chrome.declarativeNetRequest.updateDynamicRules(ruleData);
+    sendResponse({ success: true });
 
-  if (ruleData.removeRuleIds?.[0] === block.tabId) {
-    block.tabId = -1;
+    if (ruleData.removeRuleIds?.[0] === block.tabId) {
+      block.tabId = -1;
+    }
+  } catch (error) {
+    console.error('Error updating rules:', error);
+    sendResponse({ success: false, error: (error as { message?: string })?.message ?? error });
   }
 }
 

@@ -23,7 +23,8 @@ export default function HomePage(): ReactElement {
   const chromeApiHandlers = {
     onCatch(reason: any) {
       console.error(reason);
-      setErrorSnackbarMessage('확장 프로그램을 다시 실행해주세요');
+      setErrorSnackbarMessage(reason.toString() || '확장 프로그램을 다시 실행해주세요');
+      setShowErrorSnackbar(true);
     }
   };
   const { ruleList, setRuleList, newRuleId, setNewRuleId } = useLoadRule(chromeApiHandlers);
@@ -98,9 +99,12 @@ export default function HomePage(): ReactElement {
                   clearTimeout(debounceRef.current.timerId);
                 }
                 debounceRef.current.timerId = setTimeout(() => {
-                  updateRules({ removeRuleIds: [newRule.id], addRules: [newRule] }).catch(
-                    chromeApiHandlers.onCatch
-                  );
+                  updateRules({ removeRuleIds: [newRule.id], addRules: [newRule] })
+                    .then(data => {
+                      if (data?.success) return;
+                      chromeApiHandlers.onCatch(data?.error);
+                    })
+                    .catch(chromeApiHandlers.onCatch);
                   debounceRef.current.lastRuleId = newRule.id;
                 }, 1000);
               }}
