@@ -36,14 +36,6 @@ async function updateRules(
   sendResponse: (...args: any[]) => void
 ) {
   try {
-    const urlFilter = ruleData.addRules?.[0].condition?.urlFilter;
-    if (urlFilter) {
-      const granted = await chrome.permissions.request({ origins: [urlFilter] });
-      if (!granted) {
-        console.error('Permission not granted for URL:', urlFilter);
-      }
-    }
-
     await chrome.declarativeNetRequest.updateDynamicRules(ruleData);
     sendResponse({ success: true });
 
@@ -184,7 +176,7 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
   if (!block.enabled) return;
 
   reqCounts[tabId] = (reqCounts[tabId] || 0) + 1;
-  if (block.tabId !== tabId && reqCounts[tabId] > 100) {
+  if (block.tabId !== tabId && reqCounts[tabId] > 300) {
     const initiator = details.initiator ?? '*://*';
     chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [tabId],

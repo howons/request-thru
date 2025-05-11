@@ -24,7 +24,7 @@ type Props = {
 };
 
 export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
-  const url = rule.condition.urlFilter;
+  const url = rule.condition.regexFilter ?? rule.condition.urlFilter;
   const requestHeaders = rule.action.requestHeaders;
 
   const isActive = !rule.condition.excludedRequestMethods?.length;
@@ -51,7 +51,7 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
     const newUrl = e.target.value;
     const newRule: chrome.declarativeNetRequest.Rule = {
       ...rule,
-      condition: { ...rule.condition, urlFilter: newUrl }
+      condition: { ...rule.condition, regexFilter: newUrl }
     };
     updateRuleset(newRule);
   };
