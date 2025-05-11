@@ -1,8 +1,7 @@
 type elementType<T> = T extends (infer U)[] ? U : T;
 
 export const emptyCondition: chrome.declarativeNetRequest.Rule['condition'] = {
-  regexFilter: 'https?://.*/.*',
-  resourceTypes: ['main_frame']
+  regexFilter: 'https?://.*/.*'
 };
 
 export const emptyRequestHeader: elementType<

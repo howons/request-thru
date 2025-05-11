@@ -16,9 +16,7 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
       });
   } else if (message.action === 'updateRules') {
     const ruleData: chrome.declarativeNetRequest.UpdateRuleOptions = message.payload;
-    updateRules(ruleData, sendResponse).then(() => {
-      setBlockReqListener();
-    });
+    updateRules(ruleData, sendResponse);
   } else if (message.action === 'setBlock') {
     const enableBlock = message.payload as boolean;
     block.enabled = enableBlock;
@@ -154,14 +152,13 @@ const block: { tabId: number; enabled?: boolean } = {
   enabled: undefined
 };
 
-function setBlockReqListener() {
-  chrome.permissions.getAll().then(permissions => {
-    const hostPermissions = permissions.origins ?? [];
+chrome.webRequest.onBeforeRequest.addListener(
+  blockReqHandler,
+  { urls: ['http://*/*', 'https://*/*'] },
+  []
+);
 
-    chrome.webRequest.onBeforeRequest.removeListener(blockReqHandler);
-    chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: hostPermissions }, []);
-  });
-}
+let blockResetTimer: number | null = null;
 
 function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | undefined {
   const tabId = details.tabId;
@@ -176,7 +173,7 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
   if (!block.enabled) return;
 
   reqCounts[tabId] = (reqCounts[tabId] || 0) + 1;
-  if (block.tabId !== tabId && reqCounts[tabId] > 300) {
+  if (reqCounts[tabId] > 300) {
     const initiator = details.initiator ?? '*://*';
     chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [tabId],
@@ -185,7 +182,7 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
           id: tabId,
           action: { type: 'block' },
           condition: {
-            urlFilter: `${initiator}/*`
+            regexFilter: `${initiator}/.*`
           }
         }
       ]
@@ -193,17 +190,22 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
 
     block.tabId = tabId;
     reqCounts[tabId] = 0;
+    chrome.tabs.reload(tabId, { bypassCache: true }).catch(err => {
+      console.error('Error reloading tab:', err);
+    });
   }
 
-  setInterval(() => {
-    reqCounts = {};
-    if (block.tabId !== -1) {
-      chrome.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: [block.tabId]
-      });
-      block.tabId = -1;
-    }
-  }, 60000);
+  if (!blockResetTimer) {
+    blockResetTimer = setInterval(() => {
+      reqCounts = {};
+      if (block.tabId !== -1) {
+        chrome.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: [block.tabId]
+        });
+        block.tabId = -1;
+      }
+    }, 60000);
+  }
 
   return;
 }
