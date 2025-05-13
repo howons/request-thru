@@ -30,7 +30,7 @@ export default function InfRequest() {
       <Typography variant="caption" sx={{ marginLeft: 'auto' }}>
         무한 네트워크 요청 자동 차단
       </Typography>
-      <Tooltip title="Rule이 하나라도 존재하는 url만 차단합니다.">
+      <Tooltip title="분당 300회 이상의 요청을 보내는 사이트를 차단합니다.">
         <Switch checked={enableBlock} onChange={toggleBlocking} />
       </Tooltip>
     </Stack>
