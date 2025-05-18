@@ -1,7 +1,7 @@
 type elementType<T> = T extends (infer U)[] ? U : T;
 
 export const emptyCondition: chrome.declarativeNetRequest.Rule['condition'] = {
-  initiatorDomains: ['localhost:8080'],
+  initiatorDomains: ['localhost'],
   resourceTypes: [
     'main_frame',
     'sub_frame',
