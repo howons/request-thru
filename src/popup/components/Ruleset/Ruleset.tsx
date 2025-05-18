@@ -16,17 +16,25 @@ import {
 
 import { emptyCondition, emptyRequestHeader } from '../../constants/rules';
 import { clearAutoUpdate } from '../../messages/autoUpdate';
+import { updateRuleAlias } from '../../messages/rule';
+import useDebounce from '../../utils/useDebounce';
 import RuleItem from '../RuleItem/RuleItem';
 
 import './Ruleset.css';
 
 type Props = {
   rule: chrome.declarativeNetRequest.Rule;
-  updateRuleset: (newRule: chrome.declarativeNetRequest.Rule) => void;
+  ruleAlias?: string;
+  updateRuleset: (newRule: chrome.declarativeNetRequest.Rule, delay?: number) => void;
   deleteRuleset: () => void;
 };
 
-export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
+export default function Ruleset({
+  rule,
+  ruleAlias = rule.id.toString(),
+  updateRuleset,
+  deleteRuleset
+}: Props) {
   const urlList = rule.condition.initiatorDomains ?? emptyCondition.initiatorDomains!;
   const requestHeaders = rule.action.requestHeaders;
 
@@ -50,6 +58,14 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
     updateRuleset(newRule);
   };
 
+  const handleAliasChange = useDebounce(
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { value: newAlias } = e.target;
+      updateRuleAlias(rule.id, newAlias);
+    },
+    1000
+  );
+
   const handleUrlChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { value: newUrl, id } = e.target;
     const index = Number(id.split('-')[1]);
@@ -60,7 +76,7 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
         initiatorDomains: urlList.map((url, i) => (i === index ? newUrl : url))
       }
     };
-    updateRuleset(newRule);
+    updateRuleset(newRule, 1000);
   };
 
   const handleUrlAppend = (e: MouseEvent<HTMLButtonElement>) => {
@@ -116,57 +132,76 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
         aria-controls={`panel${rule.id}-content`}
         id={`panel${rule.id}-header`}
       >
-        <Switch
-          checked={isActive}
-          sx={{ marginTop: '10px' }}
-          onChange={handleOnOff}
-          onClick={e => {
-            e.stopPropagation();
-          }}
-        />
         <Stack direction={'row'} gap={2} alignItems="center">
-          {urlList.map((url, index) => (
-            <Tooltip key={index} title="요청을 보내는 페이지 도메인을 입력합니다. ex) example.com">
-              <TextField
-                id={`url-${index}`}
-                variant="standard"
-                label="domain"
-                type="url"
-                value={url}
-                disabled={!isActive}
-                className="url-input"
-                onChange={handleUrlChange}
-                onClick={e => {
-                  e.stopPropagation();
-                }}
-              />
-            </Tooltip>
-          ))}
-          <Stack direction="row" gap={0.5} alignItems="center">
-            <Button
-              variant="outlined"
-              color="primary"
-              sx={{ minWidth: 0, padding: '2px 7px', margin: '7px 0' }}
-              onClick={handleUrlAppend}
-            >
-              +
-            </Button>
-            <Tooltip title="빈 칸인 domain을 삭제합니다.">
-              <Button
-                variant="outlined"
-                color="error"
-                sx={{ minWidth: 0, padding: '2px 7px', margin: '7px 0' }}
-                onClick={handleUrlDelete}
-              >
-                -
-              </Button>
-            </Tooltip>
-          </Stack>
+          <Switch
+            checked={isActive}
+            sx={{ marginTop: '10px' }}
+            onChange={handleOnOff}
+            onClick={e => {
+              e.stopPropagation();
+            }}
+          />
+          <TextField
+            label="별명"
+            variant="standard"
+            defaultValue={ruleAlias}
+            onChange={handleAliasChange}
+          />
         </Stack>
       </AccordionSummary>
       <AccordionDetails>
         {!isBlock ? (
           <>
+            <Stack
+              direction="row"
+              gap={2}
+              alignItems="center"
+              justifyContent="space-between"
+              marginBottom={2}
+            >
+              <Stack direction="row" gap={2} alignItems="center">
+                {urlList.map((url, index) => (
+                  <Tooltip
+                    key={index}
+                    title="요청을 보내는 페이지 도메인을 입력합니다. ex) example.com"
+                  >
+                    <TextField
+                      id={`url-${index}`}
+                      variant="standard"
+                      label="domain"
+                      type="url"
+                      value={url}
+                      disabled={!isActive}
+                      className="url-input"
+                      onChange={handleUrlChange}
+                      onClick={e => {
+                        e.stopPropagation();
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+              </Stack>
+              <Stack direction="row" gap={0.5} alignItems="center">
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  sx={{ minWidth: 0, padding: '2px 7px', margin: '7px 0' }}
+                  onClick={handleUrlAppend}
+                >
+                  +
+                </Button>
+                <Tooltip title="빈 칸인 domain을 삭제합니다.">
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    sx={{ minWidth: 0, padding: '2px 7px', margin: '7px 0' }}
+                    onClick={handleUrlDelete}
+                  >
+                    -
+                  </Button>
+                </Tooltip>
+              </Stack>
+            </Stack>
             <List>
               {requestHeaders &&
                 requestHeaders.map((headerInfo, index) => (
@@ -182,7 +217,12 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
                   />
                 ))}
             </List>
-            <Button className="append-button" variant="contained" onClick={appendRule}>
+            <Button
+              className="append-button"
+              variant="contained"
+              onClick={appendRule}
+              sx={{ width: '200px' }}
+            >
               Header 추가
             </Button>
           </>

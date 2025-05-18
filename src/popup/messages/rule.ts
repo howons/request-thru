@@ -13,6 +13,21 @@ export async function updateRules(ruleData: chrome.declarativeNetRequest.UpdateR
   });
 }
 
+export async function getRuleAliases() {
+  const ruleAliases: { id: number; alias: string }[] = await chrome.runtime.sendMessage({
+    action: 'getRuleAliases'
+  });
+
+  return ruleAliases;
+}
+
+export async function updateRuleAlias(id: number, alias: string) {
+  return await chrome.runtime.sendMessage({
+    action: 'updateRuleAlias',
+    payload: { id, alias }
+  });
+}
+
 export async function setBlock(enableBlock: boolean) {
   return await chrome.runtime.sendMessage({
     action: 'setBlock',

@@ -27,7 +27,8 @@ export default function HomePage(): ReactElement {
       setShowErrorSnackbar(true);
     }
   };
-  const { ruleList, setRuleList, newRuleId, setNewRuleId } = useLoadRule(chromeApiHandlers);
+  const { ruleList, setRuleList, newRuleId, setNewRuleId, ruleAliasList } =
+    useLoadRule(chromeApiHandlers);
 
   const handleSnackbarClose = () => {
     setShowErrorSnackbar(false);
@@ -90,7 +91,8 @@ export default function HomePage(): ReactElement {
             <Ruleset
               key={rule.id}
               rule={rule}
-              updateRuleset={(newRule: chrome.declarativeNetRequest.Rule) => {
+              ruleAlias={ruleAliasList.find(alias => alias.id === rule.id)?.alias}
+              updateRuleset={(newRule: chrome.declarativeNetRequest.Rule, delay?: number) => {
                 setRuleList(prevRuleList =>
                   prevRuleList.map(prevRule => (prevRule.id === newRule.id ? newRule : prevRule))
                 );
@@ -106,7 +108,7 @@ export default function HomePage(): ReactElement {
                     })
                     .catch(chromeApiHandlers.onCatch);
                   debounceRef.current.lastRuleId = newRule.id;
-                }, 1000);
+                }, delay ?? 0);
               }}
               deleteRuleset={() => {
                 setRuleList(prevRuleList =>
@@ -116,7 +118,12 @@ export default function HomePage(): ReactElement {
               }}
             />
           ))}
-          <Button className="append-button" variant="contained" onClick={appendRuleset}>
+          <Button
+            className="append-button"
+            variant="contained"
+            onClick={appendRuleset}
+            sx={{ width: '300px' }}
+          >
             Rule 추가
           </Button>
           <Stack direction="row" alignSelf="stretch" padding="16px">

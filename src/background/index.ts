@@ -22,6 +22,25 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
     block.enabled = enableBlock;
 
     return false;
+  } else if (message.action === 'getRuleAliases') {
+    chrome.storage.local.get().then(res => {
+      const ruleAliases = Object.entries(res)
+        .filter(([key]) => key.startsWith('reqThru') && key.endsWith('_alias'))
+        .map(([key, value]) => ({
+          id: Number(key.split('_')[1]),
+          alias: value as string
+        }));
+
+      sendResponse(ruleAliases);
+    });
+  } else if (message.action === 'updateRuleAlias') {
+    const { id, alias } = message.payload as { id: number; alias: string };
+    const localKey = `reqThru_${id}_alias`;
+    const localValue = alias || '';
+    const localData = { [localKey]: localValue };
+    chrome.storage.local.set(localData).then(() => {
+      sendResponse({ success: true });
+    });
   } else {
     return false;
   }
