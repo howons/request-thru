@@ -38,3 +38,5 @@ out/
 *.pem
 
 .cache/
+
+*.zip

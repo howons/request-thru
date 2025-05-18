@@ -1,4 +1,4 @@
-import { type ChangeEvent, useRef, useState } from 'react';
+import { type ChangeEvent, type MouseEvent, useRef, useState } from 'react';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -10,12 +10,15 @@ import {
   Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography
 } from '@mui/material';
 
-import { emptyRequestHeader } from '../../constants/rules';
+import { emptyCondition, emptyRequestHeader } from '../../constants/rules';
 import { clearAutoUpdate } from '../../messages/autoUpdate';
 import RuleItem from '../RuleItem/RuleItem';
+
+import './Ruleset.css';
 
 type Props = {
   rule: chrome.declarativeNetRequest.Rule;
@@ -24,7 +27,7 @@ type Props = {
 };
 
 export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
-  const url = rule.condition.regexFilter ?? rule.condition.urlFilter;
+  const urlList = rule.condition.initiatorDomains ?? emptyCondition.initiatorDomains!;
   const requestHeaders = rule.action.requestHeaders;
 
   const isActive = !rule.condition.excludedRequestMethods?.length;
@@ -47,11 +50,33 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
     updateRuleset(newRule);
   };
 
-  const handleUrlChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const newUrl = e.target.value;
+  const handleUrlChange =
+    (index: number) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const newUrl = e.target.value;
+      const newRule: chrome.declarativeNetRequest.Rule = {
+        ...rule,
+        condition: {
+          ...rule.condition,
+          initiatorDomains: urlList.map((url, i) => (i === index ? newUrl : url))
+        }
+      };
+      updateRuleset(newRule);
+    };
+
+  const handleUrlAppend = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
     const newRule: chrome.declarativeNetRequest.Rule = {
       ...rule,
-      condition: { ...rule.condition, regexFilter: newUrl }
+      condition: { ...rule.condition, initiatorDomains: [...urlList, ''] }
+    };
+    updateRuleset(newRule);
+  };
+
+  const handleUrlDelete = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const newRule: chrome.declarativeNetRequest.Rule = {
+      ...rule,
+      condition: { ...rule.condition, initiatorDomains: urlList.filter(url => url.length > 0) }
     };
     updateRuleset(newRule);
   };
@@ -91,24 +116,53 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
         aria-controls={`panel${rule.id}-content`}
         id={`panel${rule.id}-header`}
       >
+        {rule.id}
         <Switch
           checked={isActive}
+          sx={{ marginTop: '10px' }}
           onChange={handleOnOff}
           onClick={e => {
             e.stopPropagation();
           }}
         />
-        <TextField
-          variant="standard"
-          label="target URL"
-          type="url"
-          value={url}
-          disabled={!isActive}
-          onChange={handleUrlChange}
-          onClick={e => {
-            e.stopPropagation();
-          }}
-        />
+        <Stack direction={'row'} gap={2} alignItems="center">
+          {urlList.map((url, index) => (
+            <Tooltip key={index} title="요청을 보내는 페이지 도메인을 입력합니다. ex) example.com">
+              <TextField
+                variant="standard"
+                label="domain"
+                type="url"
+                value={url}
+                disabled={!isActive}
+                className="url-input"
+                onChange={handleUrlChange(index)}
+                onClick={e => {
+                  e.stopPropagation();
+                }}
+              />
+            </Tooltip>
+          ))}
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <Button
+              variant="outlined"
+              color="primary"
+              sx={{ minWidth: 0, padding: '2px 7px', margin: '7px 0' }}
+              onClick={handleUrlAppend}
+            >
+              +
+            </Button>
+            <Tooltip title="빈 칸인 domain을 삭제합니다.">
+              <Button
+                variant="outlined"
+                color="error"
+                sx={{ minWidth: 0, padding: '2px 7px', margin: '7px 0' }}
+                onClick={handleUrlDelete}
+              >
+                -
+              </Button>
+            </Tooltip>
+          </Stack>
+        </Stack>
       </AccordionSummary>
       <AccordionDetails>
         {!isBlock ? (

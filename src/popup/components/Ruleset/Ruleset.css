@@ -1,0 +1,8 @@
+.url-input {
+  transition: min-width 0.3s ease-in-out;
+  min-width: 0;
+}
+
+.url-input:has(.Mui-focused) {
+  min-width: 200px;
+}

@@ -173,8 +173,8 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
   if (!block.enabled) return;
 
   reqCounts[tabId] = (reqCounts[tabId] || 0) + 1;
-  if (reqCounts[tabId] > 300) {
-    const initiator = details.initiator ?? '*://*';
+  if (reqCounts[tabId] > 1000) {
+    const initiator = details.initiator ?? '';
     chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [tabId],
       addRules: [
@@ -182,7 +182,7 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
           id: tabId,
           action: { type: 'block' },
           condition: {
-            regexFilter: `${initiator}/.*`
+            initiatorDomains: [initiator]
           }
         }
       ]
