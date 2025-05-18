@@ -50,18 +50,18 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
     updateRuleset(newRule);
   };
 
-  const handleUrlChange =
-    (index: number) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const newUrl = e.target.value;
-      const newRule: chrome.declarativeNetRequest.Rule = {
-        ...rule,
-        condition: {
-          ...rule.condition,
-          initiatorDomains: urlList.map((url, i) => (i === index ? newUrl : url))
-        }
-      };
-      updateRuleset(newRule);
+  const handleUrlChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { value: newUrl, id } = e.target;
+    const index = Number(id.split('-')[1]);
+    const newRule: chrome.declarativeNetRequest.Rule = {
+      ...rule,
+      condition: {
+        ...rule.condition,
+        initiatorDomains: urlList.map((url, i) => (i === index ? newUrl : url))
+      }
     };
+    updateRuleset(newRule);
+  };
 
   const handleUrlAppend = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -116,7 +116,6 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
         aria-controls={`panel${rule.id}-content`}
         id={`panel${rule.id}-header`}
       >
-        {rule.id}
         <Switch
           checked={isActive}
           sx={{ marginTop: '10px' }}
@@ -129,13 +128,14 @@ export default function Ruleset({ rule, updateRuleset, deleteRuleset }: Props) {
           {urlList.map((url, index) => (
             <Tooltip key={index} title="요청을 보내는 페이지 도메인을 입력합니다. ex) example.com">
               <TextField
+                id={`url-${index}`}
                 variant="standard"
                 label="domain"
                 type="url"
                 value={url}
                 disabled={!isActive}
                 className="url-input"
-                onChange={handleUrlChange(index)}
+                onChange={handleUrlChange}
                 onClick={e => {
                   e.stopPropagation();
                 }}
