@@ -1,6 +1,6 @@
 {
   "name": "request-thru",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A chrome extension for customizing request header",
   "license": "MIT",
   "type": "module",
