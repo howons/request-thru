@@ -9,7 +9,8 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
     chrome.declarativeNetRequest
       .getDynamicRules()
       .then(rules => {
-        sendResponse(rules);
+        const filteredRules = rules.filter(rule => rule.condition.requestDomains === undefined);
+        sendResponse(filteredRules);
       })
       .catch(reason => {
         console.error(reason);
@@ -53,7 +54,29 @@ async function updateRules(
   sendResponse: (...args: any[]) => void
 ) {
   try {
-    await chrome.declarativeNetRequest.updateDynamicRules(ruleData);
+    const duplicatedUpdateRule: chrome.declarativeNetRequest.UpdateRuleOptions = {
+      removeRuleIds: ruleData.removeRuleIds
+        ? [...ruleData.removeRuleIds, ...ruleData.removeRuleIds.map(id => 100000 + id)]
+        : undefined,
+      addRules: ruleData.addRules
+        ? [
+            ...ruleData.addRules,
+            ...ruleData.addRules.map(({ condition, ...rule }) => ({
+              ...rule,
+              id: 100000 + rule.id,
+              condition: {
+                ...condition,
+                initiatorDomains: undefined,
+                requestDomains: condition.initiatorDomains
+                  ? [...condition.initiatorDomains]
+                  : undefined
+              }
+            }))
+          ]
+        : undefined
+    };
+
+    await chrome.declarativeNetRequest.updateDynamicRules(duplicatedUpdateRule);
     sendResponse({ success: true });
 
     if (ruleData.removeRuleIds?.[0] === block.tabId) {

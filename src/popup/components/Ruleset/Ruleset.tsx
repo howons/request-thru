@@ -14,7 +14,7 @@ import {
   Typography
 } from '@mui/material';
 
-import { emptyCondition, emptyRequestHeader } from '../../constants/rules';
+import { emptyRequestHeader } from '../../constants/rules';
 import { clearAutoUpdate } from '../../messages/autoUpdate';
 import { updateRuleAlias } from '../../messages/rule';
 import useDebounce from '../../utils/useDebounce';
@@ -35,7 +35,7 @@ export default function Ruleset({
   updateRuleset,
   deleteRuleset
 }: Props) {
-  const urlList = rule.condition.initiatorDomains ?? emptyCondition.initiatorDomains!;
+  const urlList = rule.condition.initiatorDomains ?? [];
   const requestHeaders = rule.action.requestHeaders;
 
   const isActive = !rule.condition.excludedRequestMethods?.length;
