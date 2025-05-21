@@ -9,7 +9,7 @@ import PopupHeader from '../../components/PopupHeader/PopupHeader';
 import Ruleset from '../../components/Ruleset/Ruleset';
 import { emptyCondition, emptyRequestHeader } from '../../constants/rules';
 import { clearAllAutoUpdate } from '../../messages/autoUpdate';
-import { updateRules } from '../../messages/rule';
+import { deleteRuleAlias, updateRules } from '../../messages/rule';
 
 import './HomePage.css';
 import { useLoadRule } from './useLoadRule';
@@ -115,6 +115,7 @@ export default function HomePage(): ReactElement {
                   prevRuleList.filter(prevRule => prevRule.id !== rule.id)
                 );
                 updateRules({ removeRuleIds: [rule.id] }).catch(chromeApiHandlers.onCatch);
+                deleteRuleAlias(rule.id);
               }}
             />
           ))}

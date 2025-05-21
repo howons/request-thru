@@ -42,6 +42,12 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
     chrome.storage.local.set(localData).then(() => {
       sendResponse({ success: true });
     });
+  } else if (message.action === 'deleteRuleAlias') {
+    const { id } = message.payload as { id: number };
+    const localKey = `reqThru_${id}_alias`;
+    chrome.storage.local.remove(localKey).then(() => {
+      sendResponse({ success: true });
+    });
   } else {
     return false;
   }

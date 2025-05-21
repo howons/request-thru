@@ -28,6 +28,13 @@ export async function updateRuleAlias(id: number, alias: string) {
   });
 }
 
+export async function deleteRuleAlias(id: number) {
+  return await chrome.runtime.sendMessage({
+    action: 'deleteRuleAlias',
+    payload: { id }
+  });
+}
+
 export async function setBlock(enableBlock: boolean) {
   return await chrome.runtime.sendMessage({
     action: 'setBlock',
