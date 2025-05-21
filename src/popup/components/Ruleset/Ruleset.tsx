@@ -144,7 +144,7 @@ export default function Ruleset({
           <TextField
             label="별명"
             variant="standard"
-            defaultValue={ruleAlias}
+            defaultValue={!isBlock ? ruleAlias : urlList.join(', ')}
             onChange={handleAliasChange}
           />
         </Stack>
@@ -163,13 +163,12 @@ export default function Ruleset({
                 {urlList.map((url, index) => (
                   <Tooltip
                     key={index}
-                    title="요청을 보내는 페이지 도메인을 입력합니다. ex) example.com"
+                    title="요청을 보내는 페이지 도메인을 입력합니다. 포트번호는 인식 불가. ex) example.com, localhost"
                   >
                     <TextField
                       id={`url-${index}`}
                       variant="standard"
                       label="domain"
-                      type="url"
                       value={url}
                       disabled={!isActive}
                       className="url-input"
