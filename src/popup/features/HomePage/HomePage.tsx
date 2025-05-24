@@ -1,4 +1,4 @@
-import { ReactElement, useRef, useState } from 'react';
+import { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { Alert, Button, Snackbar, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -18,20 +18,41 @@ export default function HomePage(): ReactElement {
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
 
+  const onCatch = useCallback((reason: any) => {
+    console.error(reason);
+    setErrorSnackbarMessage(reason.toString() || '확장 프로그램을 다시 실행해주세요');
+    setShowErrorSnackbar(true);
+  }, []);
+
+  const { ruleList, setRuleList, newRuleId, setNewRuleId, ruleAliasList } = useLoadRule({
+    onCatch
+  });
+
+  // To Selectively apply debouncing, This function uses debounceRef instead of useDebounce hook
   const debounceRef = useRef({ timerId: 0, lastRuleId: 0 });
+  const updateRuleset = (newRule: chrome.declarativeNetRequest.Rule, delay?: number) => {
+    setRuleList(prevRuleList =>
+      prevRuleList.map(prevRule => (prevRule.id === newRule.id ? newRule : prevRule))
+    );
 
-  const chromeApiHandlers = {
-    onCatch(reason: any) {
-      console.error(reason);
-      setErrorSnackbarMessage(reason.toString() || '확장 프로그램을 다시 실행해주세요');
-      setShowErrorSnackbar(true);
+    if (newRule.id === debounceRef.current.lastRuleId) {
+      clearTimeout(debounceRef.current.timerId);
     }
+    debounceRef.current.timerId = setTimeout(() => {
+      updateRules({ removeRuleIds: [newRule.id], addRules: [newRule] })
+        .then(data => {
+          if (data?.success) return;
+          onCatch(data?.error);
+        })
+        .catch(onCatch);
+      debounceRef.current.lastRuleId = newRule.id;
+    }, delay ?? 0);
   };
-  const { ruleList, setRuleList, newRuleId, setNewRuleId, ruleAliasList } =
-    useLoadRule(chromeApiHandlers);
 
-  const handleSnackbarClose = () => {
-    setShowErrorSnackbar(false);
+  const deleteRuleset = (ruleId: number) => () => {
+    setRuleList(prevRuleList => prevRuleList.filter(prevRule => prevRule.id !== ruleId));
+    updateRules({ removeRuleIds: [ruleId] }).catch(onCatch);
+    deleteRuleAlias(ruleId);
   };
 
   const appendRuleset = () => {
@@ -47,9 +68,11 @@ export default function HomePage(): ReactElement {
     setRuleList(prevRuleList => [...prevRuleList, newRule]);
     setNewRuleId(prevNewRuleId => prevNewRuleId + 1);
 
-    updateRules({ addRules: [newRule] }).catch(chromeApiHandlers.onCatch);
+    updateRules({ addRules: [newRule] }).catch(onCatch);
   };
 
+  // Disable all rules by excluding all request methods
+  // and clear all auto updates
   const disableAllRuleset = () => {
     const disabledRuleList = ruleList.map(rule => {
       const newRule: chrome.declarativeNetRequest.Rule = {
@@ -74,9 +97,13 @@ export default function HomePage(): ReactElement {
 
     setRuleList(disabledRuleList);
     updateRules({ removeRuleIds: ruleList.map(rule => rule.id), addRules: disabledRuleList }).catch(
-      chromeApiHandlers.onCatch
+      onCatch
     );
     clearAllAutoUpdate();
+  };
+
+  const handleSnackbarClose = () => {
+    setShowErrorSnackbar(false);
   };
 
   return (
@@ -92,31 +119,8 @@ export default function HomePage(): ReactElement {
               key={rule.id}
               rule={rule}
               ruleAlias={ruleAliasList.find(alias => alias.id === rule.id)?.alias}
-              updateRuleset={(newRule: chrome.declarativeNetRequest.Rule, delay?: number) => {
-                setRuleList(prevRuleList =>
-                  prevRuleList.map(prevRule => (prevRule.id === newRule.id ? newRule : prevRule))
-                );
-
-                if (newRule.id === debounceRef.current.lastRuleId) {
-                  clearTimeout(debounceRef.current.timerId);
-                }
-                debounceRef.current.timerId = setTimeout(() => {
-                  updateRules({ removeRuleIds: [newRule.id], addRules: [newRule] })
-                    .then(data => {
-                      if (data?.success) return;
-                      chromeApiHandlers.onCatch(data?.error);
-                    })
-                    .catch(chromeApiHandlers.onCatch);
-                  debounceRef.current.lastRuleId = newRule.id;
-                }, delay ?? 0);
-              }}
-              deleteRuleset={() => {
-                setRuleList(prevRuleList =>
-                  prevRuleList.filter(prevRule => prevRule.id !== rule.id)
-                );
-                updateRules({ removeRuleIds: [rule.id] }).catch(chromeApiHandlers.onCatch);
-                deleteRuleAlias(rule.id);
-              }}
+              updateRuleset={updateRuleset}
+              deleteRuleset={deleteRuleset(rule.id)}
             />
           ))}
           <Button

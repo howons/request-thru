@@ -2,6 +2,7 @@ import { LOCAL_KEYS } from '../popup/constants/rules';
 import type { AutoUpdateProps } from '../popup/messages/autoUpdate';
 import { fetchData, matchResult } from '../popup/utils/fetch';
 
+// messages related with rules
 chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
   const sendResponse = _sendResponse as (...args: any[]) => void;
 
@@ -9,6 +10,7 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
     chrome.declarativeNetRequest
       .getDynamicRules()
       .then(rules => {
+        // only return rules with initiatorDomains to hide duplicated rules with requestDomains
         const filteredRules = rules.filter(rule => rule.condition.requestDomains === undefined);
         sendResponse(filteredRules);
       })
@@ -60,6 +62,7 @@ async function updateRules(
   sendResponse: (...args: any[]) => void
 ) {
   try {
+    // update the rule with duplicated rule to register both initiatorDomains and requestDomains
     const duplicatedUpdateRule: chrome.declarativeNetRequest.UpdateRuleOptions = {
       removeRuleIds: ruleData.removeRuleIds
         ? [...ruleData.removeRuleIds, ...ruleData.removeRuleIds.map(id => 100000 + id)]
@@ -83,17 +86,20 @@ async function updateRules(
     };
 
     await chrome.declarativeNetRequest.updateDynamicRules(duplicatedUpdateRule);
-    sendResponse({ success: true });
 
+    // if removed rule is blocking rule, reset the block tabId
     if (ruleData.removeRuleIds?.[0] === block.tabId) {
       block.tabId = -1;
     }
+
+    sendResponse({ success: true });
   } catch (error) {
     console.error('Error updating rules:', error);
     sendResponse({ success: false, error: (error as { message?: string })?.message ?? error });
   }
 }
 
+// memoize storage items to avoid multiple calls
 let storageItems: Record<string, any> | null = null;
 
 chrome.tabs.onActivated.addListener(() => {
@@ -107,6 +113,7 @@ chrome.tabs.onActivated.addListener(() => {
   }
 });
 
+// update rules with auto update enabled
 function updateRuleOnTabActivate(items: Record<string, any>) {
   Object.entries(items).forEach(async ([key, updatedAt]) => {
     if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
@@ -136,17 +143,18 @@ function updateRuleOnTabActivate(items: Record<string, any>) {
     const result = await fetchData(apiUrl);
     const regResult = matchResult(result, regMatcher, regFlag, regPlacer);
 
-    autoUpdateRule({ ruleItemId, value: regResult });
+    updateHeader({ ruleItemId, value: regResult });
   });
 }
 
+// messages related with auto update
 chrome.runtime.onMessage.addListener((message, sender, sendMessage) => {
   if (message.action === 'setAutoUpdate') {
     const { ruleItemId, value } = message.payload as AutoUpdateProps;
 
     const localKey = `${ruleItemId}_auto`;
 
-    autoUpdateRule({ ruleItemId, value }).then(() => {
+    updateHeader({ ruleItemId, value }).then(() => {
       chrome.storage.local.set({ [localKey]: Date.now() });
       sendMessage();
     });
@@ -171,12 +179,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendMessage) => {
   return true;
 });
 
-type FetchAndUpdateRuleProps = {
+type UpdateHeaderProps = {
   ruleItemId: string;
   value: string;
 };
 
-function autoUpdateRule({ ruleItemId, value }: FetchAndUpdateRuleProps) {
+function updateHeader({ ruleItemId, value }: UpdateHeaderProps) {
   const [, ruleIdStr, indexStr] = ruleItemId.split('_');
   const ruleId = Number(ruleIdStr);
   const index = Number(indexStr);
@@ -220,9 +228,11 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
   }
   if (!block.enabled) return;
 
+  // count requests per tab
   reqCounts[tabId] = (reqCounts[tabId] || 0) + 1;
+  // if the request count exceeds 1000, block the tab
   if (reqCounts[tabId] > 1000) {
-    const initiator = (details.initiator ?? '').split('://')[1].split('/')[0].split(':')[0];
+    const initiatorDomain = (details.initiator ?? '').split('://')[1].split('/')[0].split(':')[0];
     chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [tabId],
       addRules: [
@@ -230,7 +240,7 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
           id: tabId,
           action: { type: 'block' },
           condition: {
-            initiatorDomains: [initiator],
+            initiatorDomains: [initiatorDomain],
             resourceTypes: [
               'main_frame',
               'sub_frame',
@@ -248,11 +258,14 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
 
     block.tabId = tabId;
     reqCounts[tabId] = 0;
+
+    // reload the tab to cancel queued requests
     chrome.tabs.reload(tabId, { bypassCache: true }).catch(err => {
       console.error('Error reloading tab:', err);
     });
   }
 
+  // reset blocking rules every 60 seconds
   if (!blockResetTimer) {
     blockResetTimer = setInterval(() => {
       reqCounts = {};

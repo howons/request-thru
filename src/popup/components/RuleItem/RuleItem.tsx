@@ -1,10 +1,12 @@
-import { type ChangeEvent, useRef, useState } from 'react';
+import { type ChangeEvent, useState } from 'react';
 
 import { Button, Checkbox, ListItem, Stack, TextField } from '@mui/material';
 
 import { clearAutoUpdate } from '../../messages/autoUpdate';
 
 import RuleOptions from './RuleOptions';
+
+const OFF_RULE_PREFIX = '-off--';
 
 type Props = {
   headerInfo: chrome.declarativeNetRequest.ModifyHeaderInfo;
@@ -26,12 +28,11 @@ export default function RuleItem({
   deleteRuleset
 }: Props) {
   const { header, value } = headerInfo;
-  const isActive = !header.startsWith('-off--');
+  const isActive = !header.startsWith(OFF_RULE_PREFIX);
 
   const ruleItemId = `reqThru_${rule.id}_${index}`;
 
   const [isDeleteReady, setIsDeleteReady] = useState(false);
-  const deleteRef = useRef(0);
 
   const handleOnOff = (e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
     const newHeaderInfo = {
@@ -39,9 +40,9 @@ export default function RuleItem({
       ...{
         header:
           checked && !isActive
-            ? header.split('-off--')[1]
+            ? header.split(OFF_RULE_PREFIX)[1]
             : !checked && isActive
-              ? `-off--${header}`
+              ? `${OFF_RULE_PREFIX}${header}`
               : header
       }
     };
@@ -76,7 +77,6 @@ export default function RuleItem({
   };
 
   const handleDeleteClick = () => {
-    clearTimeout(deleteRef.current);
     if (!isDeleteReady) {
       setIsDeleteReady(true);
       setTimeout(() => {
@@ -86,6 +86,7 @@ export default function RuleItem({
       return;
     }
 
+    // If the rule is the only rule in ruleset, delete the whole ruleset
     if (isSingle) {
       deleteRuleset();
     } else {

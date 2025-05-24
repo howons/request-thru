@@ -3,19 +3,20 @@ import { useEffect, useState } from 'react';
 import { getRuleAliases, getRules } from '../../messages/rule';
 
 type Props = {
-  onBefore?: () => void;
   onCatch?: (reason: any) => void;
-  onAfter?: () => void;
 };
 
-export const useLoadRule = ({ onAfter, onBefore, onCatch }: Props) => {
+/**
+ * initializes and loads the rules and rule aliases from the storage.
+ * If the rules are loaded successfully, it sets the new rule ID based on the maximum existing rule ID.
+ * It also sorts the rules based on their aliases.
+ */
+export const useLoadRule = ({ onCatch }: Props) => {
   const [ruleList, setRuleList] = useState<chrome.declarativeNetRequest.Rule[]>([]);
   const [newRuleId, setNewRuleId] = useState(1);
   const [ruleAliasList, setRuleAliasList] = useState<{ id: number; alias: string }[]>([]);
 
   useEffect(() => {
-    onBefore?.();
-
     Promise.all([getRules(), getRuleAliases()])
       .then(([rules, aliases]) => {
         if (ruleList.length <= 0 && rules.length > 0) {
@@ -31,8 +32,7 @@ export const useLoadRule = ({ onAfter, onBefore, onCatch }: Props) => {
         }
         setRuleAliasList(aliases);
       })
-      .catch(onCatch)
-      .finally(onAfter);
+      .catch(onCatch);
   }, []);
 
   return {

@@ -84,6 +84,7 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
     const regResult = matchResult(result, regMatcher, regFlag, regPlacer);
     updateValue(regResult);
 
+    // if auto update is enabled, update the auto update time log
     if (isAutoEnabled) {
       setAutoUpdate({
         ruleItemId,

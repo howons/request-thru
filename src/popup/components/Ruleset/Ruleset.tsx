@@ -1,4 +1,4 @@
-import { type ChangeEvent, type MouseEvent, useRef, useState } from 'react';
+import { type ChangeEvent, type MouseEvent, useState } from 'react';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -43,7 +43,6 @@ export default function Ruleset({
   const isBlock = rule.action.type === 'block';
 
   const [isDeleteReady, setIsDeleteReady] = useState(false);
-  const deleteRef = useRef(0);
 
   const handleOnOff = (e: ChangeEvent<HTMLInputElement>, checked: boolean) => {
     const newRule: chrome.declarativeNetRequest.Rule = {
@@ -109,7 +108,6 @@ export default function Ruleset({
   };
 
   const handleDeleteClick = () => {
-    clearTimeout(deleteRef.current);
     if (!isDeleteReady) {
       setIsDeleteReady(true);
       setTimeout(() => {
@@ -120,6 +118,7 @@ export default function Ruleset({
     }
 
     deleteRuleset();
+    // Clear auto update for each request header in ruleset
     requestHeaders?.forEach((_, i) => {
       clearAutoUpdate(`reqThru_${rule.id}_${i}`);
     });
@@ -163,7 +162,7 @@ export default function Ruleset({
                 {urlList.map((url, index) => (
                   <Tooltip
                     key={index}
-                    title="요청을 보내는 페이지 도메인을 입력합니다. 포트번호는 인식 불가. ex) example.com, localhost"
+                    title="요청을 보내거나 받을 도메인을 입력합니다. 포트번호는 인식 불가. ex) example.com, localhost"
                   >
                     <TextField
                       id={`url-${index}`}
