@@ -133,9 +133,33 @@ export default function RuleOptions({ ruleItemId, updateValue }: Props) {
   return (
     <Accordion>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} className="rule-options-accordian-summary">
-        <Typography variant="caption" margin="0 0 0 auto">
-          rule options
-        </Typography>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          gap={1}
+          flexGrow={1}
+        >
+          {isAutoUpdate ? (
+            <IconButton
+              aria-label="refresh"
+              color="primary"
+              disabled={isApiLoading}
+              size="small"
+              onClick={e => {
+                e.stopPropagation();
+                handleApiRefresh(isAutoUpdate);
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          ) : (
+            <div />
+          )}
+          <Typography variant="caption" margin="0">
+            rule options
+          </Typography>
+        </Stack>
       </AccordionSummary>
       <AccordionDetails>
         <Stack direction="row" alignItems="center">
