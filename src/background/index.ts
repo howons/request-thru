@@ -59,7 +59,7 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
 
 async function updateRules(
   ruleData: chrome.declarativeNetRequest.UpdateRuleOptions,
-  sendResponse: (...args: any[]) => void
+  sendResponse?: (...args: any[]) => void
 ) {
   try {
     // update the rule with duplicated rule to register both initiatorDomains and requestDomains
@@ -92,25 +92,17 @@ async function updateRules(
       block.tabId = -1;
     }
 
-    sendResponse({ success: true });
+    sendResponse?.({ success: true });
   } catch (error) {
     console.error('Error updating rules:', error);
-    sendResponse({ success: false, error: (error as { message?: string })?.message ?? error });
+    sendResponse?.({ success: false, error: (error as { message?: string })?.message ?? error });
   }
 }
 
-// memoize storage items to avoid multiple calls
-let storageItems: Record<string, any> | null = null;
-
 chrome.tabs.onActivated.addListener(() => {
-  if (storageItems) {
-    updateRuleOnTabActivate(storageItems);
-  } else {
-    chrome.storage.local.get().then(items => {
-      storageItems = items;
-      updateRuleOnTabActivate(items);
-    });
-  }
+  chrome.storage.local.get().then(items => {
+    updateRuleOnTabActivate(items);
+  });
 });
 
 // update rules with auto update enabled
@@ -143,7 +135,17 @@ function updateRuleOnTabActivate(items: Record<string, any>) {
     const result = await fetchData(apiUrl);
     const regResult = matchResult(result, regMatcher, regFlag, regPlacer);
 
-    updateHeader({ ruleItemId, value: regResult });
+    chrome.action.setBadgeText({ text: '🔄️' });
+
+    setTimeout(() => {
+      updateHeader({ ruleItemId, value: regResult });
+      chrome.action.setBadgeText({ text: '✅' });
+      chrome.storage.local.set({ [key]: Date.now() });
+    }, 1000);
+
+    setTimeout(() => {
+      chrome.action.setBadgeText({ text: '' });
+    }, 2000);
   });
 }
 
@@ -195,7 +197,7 @@ function updateHeader({ ruleItemId, value }: UpdateHeaderProps) {
 
     modifyingRule.action.requestHeaders[index].value = value;
 
-    chrome.declarativeNetRequest.updateDynamicRules({
+    updateRules({
       removeRuleIds: [ruleId],
       addRules: [modifyingRule]
     });
