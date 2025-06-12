@@ -143,7 +143,7 @@ export default function Ruleset({
           <TextField
             label="별명"
             variant="standard"
-            defaultValue={!isBlock ? ruleAlias : urlList.join(', ')}
+            defaultValue={!isBlock ? ruleAlias : (rule.condition.urlFilter ?? 'blocking rule')}
             onChange={handleAliasChange}
           />
         </Stack>

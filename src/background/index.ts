@@ -217,24 +217,27 @@ chrome.webRequest.onBeforeRequest.addListener(
 );
 
 let blockResetTimer: number | null = null;
+let blockEnabledTimer: number | null = null;
 
 function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | undefined {
   const tabId = details.tabId;
   if (tabId === -1) return;
 
-  if (block.enabled === undefined) {
+  if (blockEnabledTimer) {
+    clearTimeout(blockEnabledTimer);
+  }
+  blockEnabledTimer = setTimeout(() => {
     chrome.storage.local.get('reqThru_block').then(res => {
       block.enabled = res.reqThru_block ?? true;
     });
-    return;
-  }
+  }, 300);
+
   if (!block.enabled) return;
 
   // count requests per tab
   reqCounts[tabId] = (reqCounts[tabId] || 0) + 1;
   // if the request count exceeds 1000, block the tab
   if (reqCounts[tabId] > 1000) {
-    const initiatorDomain = (details.initiator ?? '').split('://')[1].split('/')[0].split(':')[0];
     chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [tabId],
       addRules: [
@@ -242,7 +245,7 @@ function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | und
           id: tabId,
           action: { type: 'block' },
           condition: {
-            initiatorDomains: [initiatorDomain],
+            urlFilter: details.initiator,
             resourceTypes: [
               'main_frame',
               'sub_frame',
