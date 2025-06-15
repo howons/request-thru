@@ -41,3 +41,10 @@ export async function setBlock(enableBlock: boolean) {
     payload: enableBlock
   });
 }
+
+export async function setBlockUrl(urlFilter: string[]) {
+  return await chrome.runtime.sendMessage({
+    action: 'setBlockUrl',
+    payload: urlFilter
+  });
+}

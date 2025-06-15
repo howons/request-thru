@@ -141,7 +141,7 @@ export default function HomePage(): ReactElement {
               전체 비활성화
             </Button>
           </Stack>
-          <InfRequest />
+          <InfRequest onCatch={onCatch} />
         </Stack>
       </PopupContent>
       <Snackbar open={showErrorSnackbar} autoHideDuration={5000} onClose={handleSnackbarClose}>

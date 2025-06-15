@@ -150,7 +150,7 @@ function updateRuleOnTabActivate(items: Record<string, any>) {
 }
 
 // messages related with auto update
-chrome.runtime.onMessage.addListener((message, sender, sendMessage) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'setAutoUpdate') {
     const { ruleItemId, value } = message.payload as AutoUpdateProps;
 
@@ -158,14 +158,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendMessage) => {
 
     updateHeader({ ruleItemId, value }).then(() => {
       chrome.storage.local.set({ [localKey]: Date.now() });
-      sendMessage();
+      sendResponse();
     });
   } else if (message.action === 'clearAutoUpdate') {
     const ruleItemId = message.payload as string;
 
     const localKey = `${ruleItemId}_auto`;
     chrome.storage.local.remove(localKey);
-    sendMessage();
+    sendResponse();
   } else if (message.action === 'clearAllAutoUpdate') {
     chrome.storage.local.get().then(items => {
       Object.entries(items).forEach(([key]) => {
@@ -174,7 +174,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendMessage) => {
         chrome.storage.local.remove(key);
       });
 
-      sendMessage();
+      sendResponse();
     });
   }
 
@@ -210,11 +210,42 @@ const block: { tabId: number; enabled?: boolean } = {
   enabled: undefined
 };
 
-chrome.webRequest.onBeforeRequest.addListener(
-  blockReqHandler,
-  { urls: ['http://*/*', 'https://*/*'] },
-  []
-);
+chrome.storage.local.get('reqThru_blockUrl').then(res => {
+  const blockUrls = res.reqThru_blockUrl?.length ? res.reqThru_blockUrl : ['http://localhost/*'];
+  chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: blockUrls }, []);
+});
+
+// Validate urlFilter: must be a non-empty array of valid Chrome match patterns
+function isValidMatchPattern(pattern: string): boolean {
+  // Chrome match patterns: https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns/
+  // Format: <scheme>://<host><path>
+  // <scheme>: http, https, file, ftp, or *
+  // <host>: *, *.<domain>, <domain>
+  // <path>: /* or specific path
+  const matchPatternRegex = /^(?:(\*|http|https|file|ftp):\/\/)(\*|(\*\.)?([^/*]+))?(\/.*)$/;
+  return typeof pattern === 'string' && matchPatternRegex.test(pattern.trim());
+}
+
+chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
+  const sendResponse = _sendResponse as (...args: any[]) => void;
+
+  if (message.action === 'setBlockUrl') {
+    const urlFilter = message.payload as string[];
+
+    if (Array.isArray(urlFilter) && urlFilter.length > 0 && urlFilter.every(isValidMatchPattern)) {
+      chrome.webRequest.onBeforeRequest.removeListener(blockReqHandler);
+      chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: urlFilter }, []);
+    } else {
+      sendResponse(
+        `Invalid urlFilter format: "${urlFilter.filter(url => !isValidMatchPattern(url)).join('", "')}"`
+      );
+
+      return true;
+    }
+  }
+
+  return false;
+});
 
 let blockResetTimer: number | null = null;
 let blockEnabledTimer: number | null = null;

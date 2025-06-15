@@ -1,0 +1,8 @@
+.inf-request-accordian-summary {
+  min-height: 25px;
+  margin: 0;
+}
+
+.inf-request-accordian-summary > * {
+  margin: 0;
+}
