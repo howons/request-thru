@@ -10,7 +10,6 @@ import {
   Stack,
   Switch,
   TextField,
-  Tooltip,
   Typography
 } from '@mui/material';
 
@@ -18,9 +17,8 @@ import { emptyRequestHeader } from '../../constants/rules';
 import { clearAutoUpdate } from '../../messages/autoUpdate';
 import { updateRuleAlias } from '../../messages/rule';
 import useDebounce from '../../utils/useDebounce';
+import ExpandableTextFields from '../ExpandableTextFields/ExpandableTextFields';
 import RuleItem from '../RuleItem/RuleItem';
-
-import './Ruleset.css';
 
 type Props = {
   rule: chrome.declarativeNetRequest.Rule;
@@ -151,55 +149,15 @@ export default function Ruleset({
       <AccordionDetails>
         {!isBlock ? (
           <>
-            <Stack
-              direction="row"
-              gap={2}
-              alignItems="center"
-              justifyContent="space-between"
-              marginBottom={2}
-            >
-              <Stack direction="row" gap={2} alignItems="center">
-                {urlList.map((url, index) => (
-                  <Tooltip
-                    key={index}
-                    title="요청을 보내거나 받을 도메인을 입력합니다. 포트번호는 인식 불가. ex) example.com, localhost"
-                  >
-                    <TextField
-                      id={`url-${index}`}
-                      variant="standard"
-                      label="domain"
-                      value={url}
-                      disabled={!isActive}
-                      className="url-input"
-                      onChange={handleUrlChange}
-                      onClick={e => {
-                        e.stopPropagation();
-                      }}
-                    />
-                  </Tooltip>
-                ))}
-              </Stack>
-              <Stack direction="row" gap={0.5} alignItems="center">
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  sx={{ minWidth: 0, padding: '2px 7px', margin: '7px 0' }}
-                  onClick={handleUrlAppend}
-                >
-                  +
-                </Button>
-                <Tooltip title="빈 칸인 domain을 삭제합니다.">
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    sx={{ minWidth: 0, padding: '2px 7px', margin: '7px 0' }}
-                    onClick={handleUrlDelete}
-                  >
-                    -
-                  </Button>
-                </Tooltip>
-              </Stack>
-            </Stack>
+            <ExpandableTextFields
+              list={urlList}
+              tooltip="요청을 보내거나 받을 도메인을 입력합니다. 포트번호는 인식 불가. ex) example.com, localhost"
+              label="domain"
+              disabled={!isActive}
+              onChange={handleUrlChange}
+              handleAppend={handleUrlAppend}
+              handleDelete={handleUrlDelete}
+            />
             <List>
               {requestHeaders &&
                 requestHeaders.map((headerInfo, index) => (
