@@ -43,22 +43,28 @@ class RequestBlocker {
     chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
       const sendResponse = _sendResponse as (...args: any[]) => void;
 
-      if (message.action === 'setBlock') {
-        const enableBlock = message.payload as boolean;
-        this.block.enabled = enableBlock;
-        return false;
-      } else if (message.action === 'setBlockUrl') {
-        const urlFilter = message.payload as string[];
+      switch (message.action) {
+        case 'setBlock':
+          const enableBlock = message.payload as boolean;
+          this.block.enabled = enableBlock;
+          return false;
 
-        if (Array.isArray(urlFilter) && urlFilter.length > 0 && urlFilter.every(this.isValidMatchPattern)) {
-          chrome.webRequest.onBeforeRequest.removeListener(this.blockReqHandler.bind(this));
-          chrome.webRequest.onBeforeRequest.addListener(this.blockReqHandler.bind(this), { urls: urlFilter }, []);
-        } else {
-          sendResponse(
-            `Invalid urlFilter format: "${urlFilter.filter(url => !this.isValidMatchPattern(url)).join('", "')}"`
-          );
-          return true;
-        }
+        case 'setBlockUrl':
+          const urlFilter = message.payload as string[];
+
+          if (Array.isArray(urlFilter) && urlFilter.length > 0 && urlFilter.every(this.isValidMatchPattern)) {
+            chrome.webRequest.onBeforeRequest.removeListener(this.blockReqHandler.bind(this));
+            chrome.webRequest.onBeforeRequest.addListener(this.blockReqHandler.bind(this), { urls: urlFilter }, []);
+          } else {
+            sendResponse(
+              `Invalid urlFilter format: "${urlFilter.filter(url => !this.isValidMatchPattern(url)).join('", "')}"`
+            );
+            return true;
+          }
+          break;
+
+        default:
+          return false;
       }
 
       return false;

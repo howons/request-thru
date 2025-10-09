@@ -29,47 +29,58 @@ class RuleManager {
     chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
       const sendResponse = _sendResponse as (...args: any[]) => void;
 
-      if (message.action === 'getRules') {
-        chrome.declarativeNetRequest
-          .getDynamicRules()
-          .then(rules => {
-            // only return rules with initiatorDomains to hide duplicated rules with requestDomains
-            const filteredRules = rules.filter(rule => rule.condition.requestDomains === undefined);
-            sendResponse(filteredRules);
-          })
-          .catch(reason => {
-            console.error(reason);
-          });
-      } else if (message.action === 'updateRules') {
-        const ruleData: chrome.declarativeNetRequest.UpdateRuleOptions = message.payload;
-        this.updateRules(ruleData, sendResponse);
-      } else if (message.action === 'getRuleAliases') {
-        chrome.storage.local.get().then(res => {
-          const ruleAliases = Object.entries(res)
-            .filter(([key]) => key.startsWith('reqThru') && key.endsWith('_alias'))
-            .map(([key, value]) => ({
-              id: Number(key.split('_')[1]),
-              alias: value as string
-            }));
+      switch (message.action) {
+        case 'getRules':
+          chrome.declarativeNetRequest
+            .getDynamicRules()
+            .then(rules => {
+              // only return rules with initiatorDomains to hide duplicated rules with requestDomains
+              const filteredRules = rules.filter(rule => rule.condition.requestDomains === undefined);
+              sendResponse(filteredRules);
+            })
+            .catch(reason => {
+              console.error(reason);
+            });
+          break;
 
-          sendResponse(ruleAliases);
-        });
-      } else if (message.action === 'updateRuleAlias') {
-        const { id, alias } = message.payload as { id: number; alias: string };
-        const localKey = `reqThru_${id}_alias`;
-        const localValue = alias || '';
-        const localData = { [localKey]: localValue };
-        chrome.storage.local.set(localData).then(() => {
-          sendResponse({ success: true });
-        });
-      } else if (message.action === 'deleteRuleAlias') {
-        const { id } = message.payload as { id: number };
-        const localKey = `reqThru_${id}_alias`;
-        chrome.storage.local.remove(localKey).then(() => {
-          sendResponse({ success: true });
-        });
-      } else {
-        return false;
+        case 'updateRules':
+          const ruleData: chrome.declarativeNetRequest.UpdateRuleOptions = message.payload;
+          this.updateRules(ruleData, sendResponse);
+          break;
+
+        case 'getRuleAliases':
+          chrome.storage.local.get().then(res => {
+            const ruleAliases = Object.entries(res)
+              .filter(([key]) => key.startsWith('reqThru') && key.endsWith('_alias'))
+              .map(([key, value]) => ({
+                id: Number(key.split('_')[1]),
+                alias: value as string
+              }));
+
+            sendResponse(ruleAliases);
+          });
+          break;
+
+        case 'updateRuleAlias':
+          const { id, alias } = message.payload as { id: number; alias: string };
+          const aliasLocalKey = `reqThru_${id}_alias`;
+          const localValue = alias || '';
+          const localData = { [aliasLocalKey]: localValue };
+          chrome.storage.local.set(localData).then(() => {
+            sendResponse({ success: true });
+          });
+          break;
+
+        case 'deleteRuleAlias':
+          const { id: deleteId } = message.payload as { id: number };
+          const deleteLocalKey = `reqThru_${deleteId}_alias`;
+          chrome.storage.local.remove(deleteLocalKey).then(() => {
+            sendResponse({ success: true });
+          });
+          break;
+
+        default:
+          return false;
       }
 
       return true;

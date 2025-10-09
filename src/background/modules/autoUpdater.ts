@@ -39,27 +39,36 @@ class AutoUpdater {
 
   private setupMessageListener() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.action === 'setAutoUpdate') {
-        const { ruleItemId, value } = message.payload as AutoUpdateProps;
-        const localKey = `${ruleItemId}_auto`;
+      switch (message.action) {
+        case 'setAutoUpdate':
+          const { ruleItemId, value } = message.payload as AutoUpdateProps;
+          const autoLocalKey = `${ruleItemId}_auto`;
 
-        this.ruleManager.updateHeader({ ruleItemId, value }).then(() => {
-          chrome.storage.local.set({ [localKey]: Date.now() });
-          sendResponse();
-        });
-      } else if (message.action === 'clearAutoUpdate') {
-        const ruleItemId = message.payload as string;
-        const localKey = `${ruleItemId}_auto`;
-        chrome.storage.local.remove(localKey);
-        sendResponse();
-      } else if (message.action === 'clearAllAutoUpdate') {
-        chrome.storage.local.get().then(items => {
-          Object.entries(items).forEach(([key]) => {
-            if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
-            chrome.storage.local.remove(key);
+          this.ruleManager.updateHeader({ ruleItemId, value }).then(() => {
+            chrome.storage.local.set({ [autoLocalKey]: Date.now() });
+            sendResponse();
           });
+          break;
+
+        case 'clearAutoUpdate':
+          const clearRuleItemId = message.payload as string;
+          const clearLocalKey = `${clearRuleItemId}_auto`;
+          chrome.storage.local.remove(clearLocalKey);
           sendResponse();
-        });
+          break;
+
+        case 'clearAllAutoUpdate':
+          chrome.storage.local.get().then(items => {
+            Object.entries(items).forEach(([key]) => {
+              if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
+              chrome.storage.local.remove(key);
+            });
+            sendResponse();
+          });
+          break;
+
+        default:
+          return false;
       }
 
       return true;
