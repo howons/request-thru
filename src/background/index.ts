@@ -1,11 +1,10 @@
-import { LOCAL_KEYS } from '../popup/constants/rules';
-import type { AutoUpdateProps } from '../popup/messages/autoUpdate';
-import { fetchData, matchResult } from '../popup/utils/fetch';
 import type { UpdateHeaderProps } from './types/messages';
 import RequestBlocker from './modules/requestBlocker';
+import AutoUpdater from './modules/autoUpdater';
 
 // Initialize modules
 const requestBlocker = new RequestBlocker();
+const autoUpdater = new AutoUpdater();
 
 // messages related with rules
 chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
@@ -100,90 +99,6 @@ async function updateRules(
   }
 }
 
-chrome.tabs.onActivated.addListener(() => {
-  chrome.storage.local.get().then(items => {
-    updateRuleOnTabActivate(items);
-  });
-});
-
-// update rules with auto update enabled
-function updateRuleOnTabActivate(items: Record<string, any>) {
-  Object.entries(items).forEach(async ([key, updatedAt]) => {
-    if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
-    const ruleItemId = key.split('_auto')[0];
-
-    const revalidationKey = `${ruleItemId}_${LOCAL_KEYS[5]}`;
-    const revalidationInterval =
-      ((await chrome.storage.local.get(revalidationKey))[revalidationKey] as number) ??
-      24 * 3600000;
-
-    const timeFromUpdate = Date.now() - Number(updatedAt);
-    if (revalidationInterval > timeFromUpdate) return;
-
-    const itemLocalKeys = LOCAL_KEYS.slice(1, 5).map(key => `${ruleItemId}_${key}`);
-    const {
-      [itemLocalKeys[0]]: apiUrl,
-      [itemLocalKeys[1]]: regMatcher,
-      [itemLocalKeys[2]]: regFlag,
-      [itemLocalKeys[3]]: regPlacer
-    } = await chrome.storage.local.get([
-      itemLocalKeys[0],
-      itemLocalKeys[1],
-      itemLocalKeys[2],
-      itemLocalKeys[3]
-    ]);
-
-    const result = await fetchData(apiUrl);
-    const regResult = matchResult(result, regMatcher, regFlag, regPlacer);
-
-    chrome.action.setBadgeText({ text: '🔄️' });
-
-    setTimeout(() => {
-      updateHeader({ ruleItemId, value: regResult });
-      chrome.action.setBadgeText({ text: '✅' });
-      chrome.storage.local.set({ [key]: Date.now() });
-    }, 1000);
-
-    setTimeout(() => {
-      chrome.action.setBadgeText({ text: '' });
-    }, 2000);
-  });
-}
-
-// messages related with auto update
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'setAutoUpdate') {
-    const { ruleItemId, value } = message.payload as AutoUpdateProps;
-
-    const localKey = `${ruleItemId}_auto`;
-
-    updateHeader({ ruleItemId, value }).then(() => {
-      chrome.storage.local.set({ [localKey]: Date.now() });
-      sendResponse();
-    });
-  } else if (message.action === 'clearAutoUpdate') {
-    const ruleItemId = message.payload as string;
-
-    const localKey = `${ruleItemId}_auto`;
-    chrome.storage.local.remove(localKey);
-    sendResponse();
-  } else if (message.action === 'clearAllAutoUpdate') {
-    chrome.storage.local.get().then(items => {
-      Object.entries(items).forEach(([key]) => {
-        if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
-
-        chrome.storage.local.remove(key);
-      });
-
-      sendResponse();
-    });
-  }
-
-  return true;
-});
-
-
-
 function updateHeader({ ruleItemId, value }: UpdateHeaderProps) {
   const [, ruleIdStr, indexStr] = ruleItemId.split('_');
   const ruleId = Number(ruleIdStr);
@@ -201,9 +116,5 @@ function updateHeader({ ruleItemId, value }: UpdateHeaderProps) {
     });
   });
 }
-
-
-
-
 
 export {};
