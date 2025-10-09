@@ -1,10 +1,12 @@
 import { LOCAL_KEYS } from '../../popup/constants/rules';
 import type { AutoUpdateProps } from '../../popup/messages/autoUpdate';
 import { fetchData, matchResult } from '../../popup/utils/fetch';
-import type { UpdateHeaderProps } from '../types/messages';
 
 class AutoUpdater {
-  constructor() {
+  private ruleManager: any; // Will receive as dependency
+
+  constructor(ruleManager: any) {
+    this.ruleManager = ruleManager;
     this.setupTabActivationListener();
     this.setupMessageListener();
   }
@@ -23,7 +25,7 @@ class AutoUpdater {
         const { ruleItemId, value } = message.payload as AutoUpdateProps;
         const localKey = `${ruleItemId}_auto`;
 
-        this.updateHeader({ ruleItemId, value }).then(() => {
+        this.ruleManager.updateHeader({ ruleItemId, value }).then(() => {
           chrome.storage.local.set({ [localKey]: Date.now() });
           sendResponse();
         });
@@ -79,7 +81,7 @@ class AutoUpdater {
       chrome.action.setBadgeText({ text: '🔄️' });
 
       setTimeout(() => {
-        this.updateHeader({ ruleItemId, value: regResult });
+        this.ruleManager.updateHeader({ ruleItemId, value: regResult });
         chrome.action.setBadgeText({ text: '✅' });
         chrome.storage.local.set({ [key]: Date.now() });
       }, 1000);
@@ -88,59 +90,6 @@ class AutoUpdater {
         chrome.action.setBadgeText({ text: '' });
       }, 2000);
     });
-  }
-
-  private updateHeader({ ruleItemId, value }: UpdateHeaderProps) {
-    const [, ruleIdStr, indexStr] = ruleItemId.split('_');
-    const ruleId = Number(ruleIdStr);
-    const index = Number(indexStr);
-
-    return chrome.declarativeNetRequest.getDynamicRules().then(rules => {
-      const modifyingRule = rules.find(rule => rule.id === ruleId);
-      if (!modifyingRule || !modifyingRule.action.requestHeaders) return;
-
-      modifyingRule.action.requestHeaders[index].value = value;
-
-      // Import updateRules function from the main module
-      // We'll need to pass this as a dependency or make it available
-      return this.updateRules({
-        removeRuleIds: [ruleId],
-        addRules: [modifyingRule]
-      });
-    });
-  }
-
-  // This method needs access to the updateRules function from the main module
-  // We'll handle this dependency injection in the next step
-  private async updateRules(ruleData: chrome.declarativeNetRequest.UpdateRuleOptions) {
-    try {
-      // update the rule with duplicated rule to register both initiatorDomains and requestDomains
-      const duplicatedUpdateRule: chrome.declarativeNetRequest.UpdateRuleOptions = {
-        removeRuleIds: ruleData.removeRuleIds
-          ? [...ruleData.removeRuleIds, ...ruleData.removeRuleIds.map(id => 100000 + id)]
-          : undefined,
-        addRules: ruleData.addRules
-          ? [
-              ...ruleData.addRules,
-              ...ruleData.addRules.map(({ condition, ...rule }) => ({
-                ...rule,
-                id: 100000 + rule.id,
-                condition: {
-                  ...condition,
-                  initiatorDomains: undefined,
-                  requestDomains: condition.initiatorDomains
-                    ? [...condition.initiatorDomains]
-                    : undefined
-                }
-              }))
-            ]
-          : undefined
-      };
-
-      await chrome.declarativeNetRequest.updateDynamicRules(duplicatedUpdateRule);
-    } catch (error) {
-      console.error('Error updating rules:', error);
-    }
   }
 }
 
