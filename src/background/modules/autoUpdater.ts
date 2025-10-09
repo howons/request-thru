@@ -1,6 +1,8 @@
 import { LOCAL_KEYS } from '../../popup/constants/rules';
 import type { AutoUpdateProps } from '../../popup/messages/autoUpdate';
 import { fetchData, matchResult } from '../../popup/utils/fetch';
+import { AUTO_UPDATE_ACTIONS } from '../constants/messageActions';
+import { STORAGE_KEYS, createStorageKey } from '../constants/storageKeys';
 
 /**
  * AutoUpdater - 자동 업데이트 모듈
@@ -40,9 +42,9 @@ class AutoUpdater {
   private setupMessageListener() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       switch (message.action) {
-        case 'setAutoUpdate':
+        case AUTO_UPDATE_ACTIONS.SET_AUTO_UPDATE:
           const { ruleItemId, value } = message.payload as AutoUpdateProps;
-          const autoLocalKey = `${ruleItemId}_auto`;
+          const autoLocalKey = createStorageKey.autoUpdate(ruleItemId);
 
           this.ruleManager.updateHeader({ ruleItemId, value }).then(() => {
             chrome.storage.local.set({ [autoLocalKey]: Date.now() });
@@ -50,17 +52,17 @@ class AutoUpdater {
           });
           break;
 
-        case 'clearAutoUpdate':
+        case AUTO_UPDATE_ACTIONS.CLEAR_AUTO_UPDATE:
           const clearRuleItemId = message.payload as string;
-          const clearLocalKey = `${clearRuleItemId}_auto`;
+          const clearLocalKey = createStorageKey.autoUpdate(clearRuleItemId);
           chrome.storage.local.remove(clearLocalKey);
           sendResponse();
           break;
 
-        case 'clearAllAutoUpdate':
+        case AUTO_UPDATE_ACTIONS.CLEAR_ALL_AUTO_UPDATE:
           chrome.storage.local.get().then(items => {
             Object.entries(items).forEach(([key]) => {
-              if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
+              if (!(key.startsWith(STORAGE_KEYS.PREFIX) && key.endsWith(STORAGE_KEYS.SUFFIXES.AUTO))) return;
               chrome.storage.local.remove(key);
             });
             sendResponse();
@@ -78,8 +80,8 @@ class AutoUpdater {
   // update rules with auto update enabled
   private updateRuleOnTabActivate(items: Record<string, any>) {
     Object.entries(items).forEach(async ([key, updatedAt]) => {
-      if (!(key.startsWith('reqThru') && key.endsWith('_auto'))) return;
-      const ruleItemId = key.split('_auto')[0];
+      if (!(key.startsWith(STORAGE_KEYS.PREFIX) && key.endsWith(STORAGE_KEYS.SUFFIXES.AUTO))) return;
+      const ruleItemId = key.split(STORAGE_KEYS.SUFFIXES.AUTO)[0];
 
       const revalidationKey = `${ruleItemId}_${LOCAL_KEYS[5]}`;
       const revalidationInterval =

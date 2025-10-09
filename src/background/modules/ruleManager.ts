@@ -1,4 +1,6 @@
 import type { UpdateHeaderProps } from '../types/messages';
+import { RULE_ACTIONS } from '../constants/messageActions';
+import { STORAGE_KEYS, createStorageKey } from '../constants/storageKeys';
 
 /**
  * RuleManager - 규칙 관리 모듈
@@ -30,7 +32,7 @@ class RuleManager {
       const sendResponse = _sendResponse as (...args: any[]) => void;
 
       switch (message.action) {
-        case 'getRules':
+        case RULE_ACTIONS.GET_RULES:
           chrome.declarativeNetRequest
             .getDynamicRules()
             .then(rules => {
@@ -43,15 +45,15 @@ class RuleManager {
             });
           break;
 
-        case 'updateRules':
+        case RULE_ACTIONS.UPDATE_RULES:
           const ruleData: chrome.declarativeNetRequest.UpdateRuleOptions = message.payload;
           this.updateRules(ruleData, sendResponse);
           break;
 
-        case 'getRuleAliases':
+        case RULE_ACTIONS.GET_RULE_ALIASES:
           chrome.storage.local.get().then(res => {
             const ruleAliases = Object.entries(res)
-              .filter(([key]) => key.startsWith('reqThru') && key.endsWith('_alias'))
+              .filter(([key]) => key.startsWith(STORAGE_KEYS.PREFIX) && key.endsWith(STORAGE_KEYS.SUFFIXES.ALIAS))
               .map(([key, value]) => ({
                 id: Number(key.split('_')[1]),
                 alias: value as string
@@ -61,9 +63,9 @@ class RuleManager {
           });
           break;
 
-        case 'updateRuleAlias':
+        case RULE_ACTIONS.UPDATE_RULE_ALIAS:
           const { id, alias } = message.payload as { id: number; alias: string };
-          const aliasLocalKey = `reqThru_${id}_alias`;
+          const aliasLocalKey = createStorageKey.ruleAlias(id);
           const localValue = alias || '';
           const localData = { [aliasLocalKey]: localValue };
           chrome.storage.local.set(localData).then(() => {
@@ -71,9 +73,9 @@ class RuleManager {
           });
           break;
 
-        case 'deleteRuleAlias':
+        case RULE_ACTIONS.DELETE_RULE_ALIAS:
           const { id: deleteId } = message.payload as { id: number };
-          const deleteLocalKey = `reqThru_${deleteId}_alias`;
+          const deleteLocalKey = createStorageKey.ruleAlias(deleteId);
           chrome.storage.local.remove(deleteLocalKey).then(() => {
             sendResponse({ success: true });
           });

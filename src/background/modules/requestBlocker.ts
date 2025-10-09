@@ -1,4 +1,6 @@
 import type { BlockState } from '../types/messages';
+import { BLOCK_ACTIONS } from '../constants/messageActions';
+import { STORAGE_KEYS } from '../constants/storageKeys';
 
 /**
  * RequestBlocker - 요청 차단 모듈
@@ -33,8 +35,8 @@ class RequestBlocker {
   }
 
   private initializeBlocker() {
-    chrome.storage.local.get('reqThru_blockUrl').then(res => {
-      const blockUrls = res.reqThru_blockUrl?.length ? res.reqThru_blockUrl : ['http://localhost/*'];
+    chrome.storage.local.get(STORAGE_KEYS.BLOCK_URL).then(res => {
+      const blockUrls = res[STORAGE_KEYS.BLOCK_URL]?.length ? res[STORAGE_KEYS.BLOCK_URL] : ['http://localhost/*'];
       chrome.webRequest.onBeforeRequest.addListener(this.blockReqHandler.bind(this), { urls: blockUrls }, []);
     });
   }
@@ -44,12 +46,12 @@ class RequestBlocker {
       const sendResponse = _sendResponse as (...args: any[]) => void;
 
       switch (message.action) {
-        case 'setBlock':
+        case BLOCK_ACTIONS.SET_BLOCK:
           const enableBlock = message.payload as boolean;
           this.block.enabled = enableBlock;
           return false;
 
-        case 'setBlockUrl':
+        case BLOCK_ACTIONS.SET_BLOCK_URL:
           const urlFilter = message.payload as string[];
 
           if (Array.isArray(urlFilter) && urlFilter.length > 0 && urlFilter.every(this.isValidMatchPattern)) {
@@ -89,8 +91,8 @@ class RequestBlocker {
       clearTimeout(this.blockEnabledTimer);
     }
     this.blockEnabledTimer = setTimeout(() => {
-      chrome.storage.local.get('reqThru_block').then(res => {
-        this.block.enabled = res.reqThru_block ?? true;
+      chrome.storage.local.get(STORAGE_KEYS.BLOCK_ENABLED).then(res => {
+        this.block.enabled = res[STORAGE_KEYS.BLOCK_ENABLED] ?? true;
       });
     }, 300);
 
