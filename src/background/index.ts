@@ -1,7 +1,11 @@
 import { LOCAL_KEYS } from '../popup/constants/rules';
 import type { AutoUpdateProps } from '../popup/messages/autoUpdate';
 import { fetchData, matchResult } from '../popup/utils/fetch';
-import type { UpdateHeaderProps, BlockState } from './types/messages';
+import type { UpdateHeaderProps } from './types/messages';
+import RequestBlocker from './modules/requestBlocker';
+
+// Initialize modules
+const requestBlocker = new RequestBlocker();
 
 // messages related with rules
 chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
@@ -21,11 +25,7 @@ chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
   } else if (message.action === 'updateRules') {
     const ruleData: chrome.declarativeNetRequest.UpdateRuleOptions = message.payload;
     updateRules(ruleData, sendResponse);
-  } else if (message.action === 'setBlock') {
-    const enableBlock = message.payload as boolean;
-    block.enabled = enableBlock;
 
-    return false;
   } else if (message.action === 'getRuleAliases') {
     chrome.storage.local.get().then(res => {
       const ruleAliases = Object.entries(res)
@@ -89,8 +89,8 @@ async function updateRules(
     await chrome.declarativeNetRequest.updateDynamicRules(duplicatedUpdateRule);
 
     // if removed rule is blocking rule, reset the block tabId
-    if (ruleData.removeRuleIds?.[0] === block.tabId) {
-      block.tabId = -1;
+    if (ruleData.removeRuleIds?.[0] === requestBlocker.getBlockTabId()) {
+      requestBlocker.resetBlockTabId();
     }
 
     sendResponse?.({ success: true });
@@ -202,117 +202,8 @@ function updateHeader({ ruleItemId, value }: UpdateHeaderProps) {
   });
 }
 
-let reqCounts: Record<number, number> = {};
-const block: BlockState = {
-  tabId: -1,
-  enabled: undefined
-};
 
-chrome.storage.local.get('reqThru_blockUrl').then(res => {
-  const blockUrls = res.reqThru_blockUrl?.length ? res.reqThru_blockUrl : ['http://localhost/*'];
-  chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: blockUrls }, []);
-});
 
-// Validate urlFilter: must be a non-empty array of valid Chrome match patterns
-function isValidMatchPattern(pattern: string): boolean {
-  // Chrome match patterns: https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns/
-  // Format: <scheme>://<host><path>
-  // <scheme>: http, https, file, ftp, or *
-  // <host>: *, *.<domain>, <domain>
-  // <path>: /* or specific path
-  const matchPatternRegex = /^(?:(\*|http|https|file|ftp):\/\/)(\*|(\*\.)?([^/*]+))?(\/.*)$/;
-  return typeof pattern === 'string' && matchPatternRegex.test(pattern.trim());
-}
 
-chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
-  const sendResponse = _sendResponse as (...args: any[]) => void;
-
-  if (message.action === 'setBlockUrl') {
-    const urlFilter = message.payload as string[];
-
-    if (Array.isArray(urlFilter) && urlFilter.length > 0 && urlFilter.every(isValidMatchPattern)) {
-      chrome.webRequest.onBeforeRequest.removeListener(blockReqHandler);
-      chrome.webRequest.onBeforeRequest.addListener(blockReqHandler, { urls: urlFilter }, []);
-    } else {
-      sendResponse(
-        `Invalid urlFilter format: "${urlFilter.filter(url => !isValidMatchPattern(url)).join('", "')}"`
-      );
-
-      return true;
-    }
-  }
-
-  return false;
-});
-
-let blockResetTimer: number | null = null;
-let blockEnabledTimer: number | null = null;
-
-function blockReqHandler(details: any): chrome.webRequest.BlockingResponse | undefined {
-  const tabId = details.tabId;
-  if (tabId === -1) return;
-
-  if (blockEnabledTimer) {
-    clearTimeout(blockEnabledTimer);
-  }
-  blockEnabledTimer = setTimeout(() => {
-    chrome.storage.local.get('reqThru_block').then(res => {
-      block.enabled = res.reqThru_block ?? true;
-    });
-  }, 300);
-
-  if (!block.enabled) return;
-
-  // count requests per tab
-  reqCounts[tabId] = (reqCounts[tabId] || 0) + 1;
-  // if the request count exceeds 1000, block the tab
-  if (reqCounts[tabId] > 1000) {
-    chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [tabId],
-      addRules: [
-        {
-          id: tabId,
-          action: { type: 'block' },
-          condition: {
-            urlFilter: details.initiator,
-            resourceTypes: [
-              'main_frame',
-              'sub_frame',
-              'script',
-              'stylesheet',
-              'image',
-              'xmlhttprequest',
-              'websocket',
-              'other'
-            ]
-          }
-        }
-      ]
-    });
-
-    block.tabId = tabId;
-    reqCounts[tabId] = 0;
-
-    // reload the tab to cancel queued requests
-    chrome.tabs.reload(tabId, { bypassCache: true }).catch(err => {
-      console.error('Error reloading tab:', err);
-    });
-  }
-
-  // reset blocking rules every 60 seconds
-  if (!blockResetTimer) {
-    blockResetTimer = setInterval(() => {
-      reqCounts = {};
-      if (block.tabId !== -1) {
-        chrome.declarativeNetRequest.updateDynamicRules({
-          removeRuleIds: [block.tabId]
-        });
-        block.tabId = -1;
-      }
-    }, 60000);
-  }
-
-  return;
-}
 
 export {};
