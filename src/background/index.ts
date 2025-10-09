@@ -1,6 +1,7 @@
 import { LOCAL_KEYS } from '../popup/constants/rules';
 import type { AutoUpdateProps } from '../popup/messages/autoUpdate';
 import { fetchData, matchResult } from '../popup/utils/fetch';
+import type { UpdateHeaderProps, BlockState } from './types/messages';
 
 // messages related with rules
 chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
@@ -181,10 +182,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
-type UpdateHeaderProps = {
-  ruleItemId: string;
-  value: string;
-};
+
 
 function updateHeader({ ruleItemId, value }: UpdateHeaderProps) {
   const [, ruleIdStr, indexStr] = ruleItemId.split('_');
@@ -205,7 +203,7 @@ function updateHeader({ ruleItemId, value }: UpdateHeaderProps) {
 }
 
 let reqCounts: Record<number, number> = {};
-const block: { tabId: number; enabled?: boolean } = {
+const block: BlockState = {
   tabId: -1,
   enabled: undefined
 };
