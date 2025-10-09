@@ -1,5 +1,23 @@
 import type { BlockState } from '../types/messages';
 
+/**
+ * RequestBlocker - 요청 차단 모듈
+ * 
+ * 역할:
+ * - 웹 요청을 모니터링하고 과도한 요청을 차단
+ * - 탭별 요청 수를 추적하여 1000회 초과 시 자동 차단
+ * - 차단된 탭 자동 새로고침 및 대기열 요청 취소
+ * - 60초마다 차단 상태 초기화 및 카운터 리셋
+ * - 사용자 정의 URL 패턴에 따른 선택적 모니터링
+ * 
+ * 메시지 액션:
+ * - setBlock: 차단 기능 활성화/비활성화
+ * - setBlockUrl: 모니터링할 URL 패턴 설정
+ * 
+ * Public API:
+ * - getBlockTabId(): 현재 차단된 탭 ID 반환
+ * - resetBlockTabId(): 차단 상태 초기화
+ */
 class RequestBlocker {
   private reqCounts: Record<number, number> = {};
   private block: BlockState = {

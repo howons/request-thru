@@ -1,5 +1,22 @@
 import type { UpdateHeaderProps } from '../types/messages';
 
+/**
+ * RuleManager - 규칙 관리 모듈
+ * 
+ * 역할:
+ * - Chrome 확장의 declarativeNetRequest 규칙 CRUD 작업 관리
+ * - 규칙 별칭(alias) 생성, 수정, 삭제 기능 제공
+ * - 규칙 헤더 값 업데이트 및 동기화 처리
+ * - initiatorDomains와 requestDomains의 중복 규칙 자동 생성
+ * - RequestBlocker와 연동하여 차단 규칙 상태 관리
+ * 
+ * 메시지 액션:
+ * - getRules: 현재 등록된 규칙 목록 반환
+ * - updateRules: 규칙 추가/삭제/수정
+ * - getRuleAliases: 규칙 별칭 목록 반환
+ * - updateRuleAlias: 규칙 별칭 수정
+ * - deleteRuleAlias: 규칙 별칭 삭제
+ */
 class RuleManager {
   private requestBlocker: any; // Will receive as dependency
 

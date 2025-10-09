@@ -2,6 +2,24 @@ import { LOCAL_KEYS } from '../../popup/constants/rules';
 import type { AutoUpdateProps } from '../../popup/messages/autoUpdate';
 import { fetchData, matchResult } from '../../popup/utils/fetch';
 
+/**
+ * AutoUpdater - 자동 업데이트 모듈
+ * 
+ * 역할:
+ * - 규칙의 헤더 값을 외부 API로부터 자동으로 업데이트
+ * - 탭 활성화 시 설정된 재검증 간격에 따라 자동 업데이트 실행
+ * - 정규식 매칭을 통한 API 응답 데이터 파싱 및 추출
+ * - 업데이트 상태를 브라우저 뱃지로 시각적 피드백 제공
+ * - Chrome Storage를 통한 업데이트 타임스탬프 관리
+ * 
+ * 메시지 액션:
+ * - setAutoUpdate: 특정 규칙에 대한 자동 업데이트 설정
+ * - clearAutoUpdate: 특정 규칙의 자동 업데이트 해제
+ * - clearAllAutoUpdate: 모든 규칙의 자동 업데이트 해제
+ * 
+ * 의존성:
+ * - RuleManager: 규칙 헤더 업데이트 실행
+ */
 class AutoUpdater {
   private ruleManager: any; // Will receive as dependency
 
